@@ -1,0 +1,13 @@
+{
+	"name": "RoROK-Prototype",
+	"tree": {
+		"$className": "DataModel",
+		"ReplicatedStorage": {
+			"GameData": { "$path": "src/shared" }
+		},
+		"ServerScriptService": { "$path": "src/server" },
+		"StarterPlayer": {
+			"StarterPlayerScripts": { "$path": "src/client" }
+		}
+	}
+}

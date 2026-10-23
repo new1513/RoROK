@@ -1,0 +1,13 @@
+# Temporary and lock files
+*.lock
+*.log
+*.bak
+*.tmp
+
+# System and OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Scratch / temporary scripts
+scratch/
