@@ -107,12 +107,21 @@ local function getQuestState(player)
 	return state
 end
 
+local function getAliasId(itemId)
+	if itemId == "StickyMucus" then return "Sticky_Mucus"
+	elseif itemId == "Sticky_Mucus" then return "StickyMucus"
+	elseif itemId == "IronOre" then return "Iron_Ore"
+	elseif itemId == "Iron_Ore" then return "IronOre"
+	end
+	return itemId
+end
+
 local function countItemInInventory(playerData, targetId)
 	if not playerData or not playerData.Inventory then return 0 end
 	local total = 0
-	local altId = (targetId == "StickyMucus" and "Sticky_Mucus") or (targetId == "Sticky_Mucus" and "StickyMucus") or targetId
+	local altId = getAliasId(targetId)
 	for _, entry in ipairs(playerData.Inventory) do
-		if entry.itemId == targetId or entry.itemId == altId then
+		if type(entry) == "table" and (entry.itemId == targetId or entry.itemId == altId) then
 			total += (tonumber(entry.quantity) or 1)
 		end
 	end
@@ -226,26 +235,13 @@ claimRemote.OnServerEvent:Connect(function(player, questId)
 	if (tonumber(state.progress[questId]) or 0) < definition.amount then return end
 
 	if definition.objective == "Collect" then
-		local required = definition.amount
-		local altId = (definition.target == "StickyMucus" and "Sticky_Mucus") or (definition.target == "Sticky_Mucus" and "StickyMucus") or definition.target
 		local pData = dataStore.GetPlayerData(player)
-		if pData and pData.Inventory then
-			for idx = #pData.Inventory, 1, -1 do
-				local entry = pData.Inventory[idx]
-				if entry.itemId == definition.target or entry.itemId == altId then
-					local take = math.min(required, entry.quantity or 1)
-					entry.quantity -= take
-					required -= take
-					if entry.quantity <= 0 then
-						table.remove(pData.Inventory, idx)
-					end
-					if required <= 0 then break end
-				end
-			end
-			local remotesApi = _G.Remotes
-			if remotesApi and remotesApi.UpdateInventory then
-				remotesApi.UpdateInventory:FireClient(player, pData.Inventory, pData.Equipment or {}, "ส่งไอเทมเควสเรียบร้อย", pData.EquipmentRefine or {})
-			end
+		if dataStore.RemoveItem then
+			dataStore.RemoveItem(player, definition.target, definition.amount)
+		end
+		local remotesApi = _G.Remotes
+		if pData and remotesApi and remotesApi.UpdateInventory then
+			remotesApi.UpdateInventory:FireClient(player, pData.Inventory, pData.Equipment or {}, "ส่งไอเทมเควสเรียบร้อย", pData.EquipmentRefine or {})
 		end
 	end
 
@@ -282,7 +278,7 @@ local function addProgress(player, objective, target, amount)
 	local state = getQuestState(player)
 	if not state then return end
 	local changed = false
-	local altTarget = (target == "StickyMucus" and "Sticky_Mucus") or (target == "Sticky_Mucus" and "StickyMucus") or target
+	local altTarget = getAliasId(target)
 	for _, questId in ipairs(state.offers or {}) do
 		local definition = definitionById[questId]
 		if definition and state.active[definition.id] and not state.claimed[definition.id]

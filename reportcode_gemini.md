@@ -191,15 +191,9 @@ local function consumeIngredients(inventory, requirements)
 
 ### 3.3 `src/server/DailyQuestSystem.server.lua`
 
-* **จุดที่ 1 (บรรทัด 110–120 และ 228–244)**: เขียนฟังก์ชัน `countItemInInventory` และลูปหักไอเทมเควสซ้ำซ้อนกับ `DataStore.HasItem` และ `DataStore.RemoveItem`
-
-```lua
--- [บรรทัด 110-120]
-local function countItemInInventory(playerData, targetId) -- ❌ [จุดซ้ำซ้อน]: เขียนลูปนับและลบไอเทมซ้ำกับ DataStore.HasItem / DataStore.RemoveItem
-	if not playerData or not playerData.Inventory then return 0 end
-	...
--- ✅ [วิธีแก้]: เรียกใช้ local _, count = dataStore.HasItem(player, targetId, 1) และใช้ dataStore.RemoveItem ตอนส่งเควส
-```
+* **จุดที่ 1 (บรรทัด 110–120 และ 228–244)** [✅ แก้ไขแล้ว]:
+  1. เพิ่มฟังก์ชัน `getAliasId` รองรับการจับคู่วัตถุดิบทั้ง `StickyMucus`/`Sticky_Mucus` และ `IronOre`/`Iron_Ore` ครบถ้วนใน `countItemInInventory` และ `addProgress`
+  2. ใน `claimRemote.OnServerEvent` เปลี่ยนจากการวนลูปหักไอเทมเอง มาเรียกใช้ `dataStore.RemoveItem(player, definition.target, definition.amount)` ซึ่งรองรับ Alias และซิงค์กระเป๋าถูกต้อง 100% เรียบร้อยแล้ว
 
 ### 3.4 `src/server/DataStore.server.lua`
 

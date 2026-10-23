@@ -742,7 +742,45 @@ remoteName = "OpenWorldTravel",
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (25 ไฟล์)
+### ข้อเพิ่มเติม: การรองรับ Alias ไอเทมและการใช้ DataStore.RemoveItem ใน `DailyQuestSystem.server.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/DailyQuestSystem.server.lua`
+* **สาเหตุ**:
+  * ฟังก์ชัน `countItemInInventory` และลูปตรวจสอบใน `DailyQuestSystem` เช็คเฉพาะ `StickyMucus`/`Sticky_Mucus` แต่ลืมเช็ค `IronOre`/`Iron_Ore` ทำให้เควสเก็บแร่เหล็กไม่สามารถนับความคืบหน้าของไอเทมที่มีชื่อแบบ Alias ได้
+  * ใน `claimRemote.OnServerEvent` เขียนลูปวนหักไอเทมในกระเป๋าเองแบบ Manual ซึ่งเสี่ยงต่อการลบไอเทมผิดพลาดและไม่สอดคล้องกับระบบคลังกลาง
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. เพิ่มฟังก์ชัน `getAliasId(itemId)` เพื่อแปลงชื่อไอเทมระหว่าง `StickyMucus` <-> `Sticky_Mucus` และ `IronOre` <-> `Iron_Ore`
+  2. ปรับปรุง `countItemInInventory` ให้ใช้ `getAliasId` และตรวจจับเฉพาะ `type(entry) == "table"` ป้องกันข้อผิดพลาด
+  3. ปรับเปลี่ยนบล็อกส่งเควส `Collect` ใน `claimRemote.OnServerEvent` ให้เรียก `dataStore.RemoveItem(player, definition.target, definition.amount)`
+  4. ใน `addProgress` เปลี่ยนการหา `altTarget` ให้เรียกผ่าน `getAliasId(target)`
+
+```lua
+-- [จุดที่ 1: getAliasId และ countItemInInventory]:
+local function getAliasId(itemId)
+    if itemId == "StickyMucus" then return "Sticky_Mucus"
+    elseif itemId == "Sticky_Mucus" then return "StickyMucus"
+    elseif itemId == "IronOre" then return "Iron_Ore"
+    elseif itemId == "Iron_Ore" then return "IronOre"
+    end
+    return itemId
+end
+
+-- [จุดที่ 2: ใช้ dataStore.RemoveItem ตอนส่งเควส]:
+if definition.objective == "Collect" then
+    local pData = dataStore.GetPlayerData(player)
+    if dataStore.RemoveItem then
+        dataStore.RemoveItem(player, definition.target, definition.amount)
+    end
+    local remotesApi = _G.Remotes
+    if pData and remotesApi and remotesApi.UpdateInventory then
+        remotesApi.UpdateInventory:FireClient(player, pData.Inventory, pData.Equipment or {}, "ส่งไอเทมเควสเรียบร้อย", pData.EquipmentRefine or {})
+    end
+end
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (26 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
@@ -758,17 +796,18 @@ remoteName = "OpenWorldTravel",
 12. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
 13. `d:\Robox\project01\src\server\StarterMap.server.lua`
 14. `d:\Robox\project01\src\server\TownStoryQuestSystem.server.lua`
-15. `d:\Robox\project01\src\client\CameraController.client.lua`
-16. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
-17. `d:\Robox\project01\src\client\CombatVFX.client.lua`
-18. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
-19. `d:\Robox\project01\src\client\UIManager.client.lua`
-20. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-21. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-22. `d:\Robox\project01\src\client\UI\MinimapView.lua`
-23. `d:\Robox\project01\src\client\UI\HotbarView.lua`
-24. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
-25. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+15. `d:\Robox\project01\src\server\DailyQuestSystem.server.lua`
+16. `d:\Robox\project01\src\client\CameraController.client.lua`
+17. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+18. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+19. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+20. `d:\Robox\project01\src\client\UIManager.client.lua`
+21. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+22. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+23. `d:\Robox\project01\src\client\UI\MinimapView.lua`
+24. `d:\Robox\project01\src\client\UI\HotbarView.lua`
+25. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
+26. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*
