@@ -67,20 +67,9 @@ local CritRate = math.floor(LUK / 3) + 1
 
 ### 2.3 `src/shared/ItemData.lua`
 
-* **จุดที่ 1 (บรรทัด 144–150)**: สร้าง Alias ซ้ำซ้อน (`Iron_Ore`, `Sticky_Mucus`) และใส่ `ItemData.Items = ItemData` กับฟังก์ชัน `GetItem` ลงในตารางเดียวกับรายการไอเทม ทำให้เกิด Circular Reference และเวลาวนลูป `pairs(ItemData)` จะติดคีย์ `"Items"` และ `"GetItem"` ไปด้วย นอกจากนี้ยังขาดไอเทม `"GoldRing"` ที่มอนสเตอร์ `GoldenThiefBug` ดรอปใน `MonsterData.lua`
-
-```lua
--- [บรรทัด 144-151]
-	-- ── ID Aliases (Backward & Drop Compatibility) ──────────
-	Iron_Ore        = { name = "Iron Ore",          type = "Material", sellPrice = 18 }, -- ❌ [จุดซ้ำซ้อน]: คัดลอกตารางซ้ำกับ IronOre และ StickyMucus
-	Sticky_Mucus    = { name = "Sticky Mucus",      type = "Material", sellPrice = 4  },
-}
-ItemData.Items = ItemData -- ❌ [จุดที่เขียนไม่ดี]: Self-reference ซ้อนในตารางข้อมูลไอเทม ทำให้การวน pairs(ItemData) เจอทั้งตารางตัวเองและฟังก์ชัน GetItem
-ItemData.GetItem = function(id)
-	return ItemData[id]
-end
--- ✅ [วิธีแก้]: อ้างอิง ItemData.Iron_Ore = ItemData.IronOre, เพิ่มไอเทม GoldRing ที่ขาดหาย และแยกตารางรายการไอเทมไว้ใน ItemData.Items หรือเช็ค type(v) == "table" and v.name เมื่อวนลูป
-```
+* **จุดที่ 1 (บรรทัด 144–150)** [✅ แก้ไขแล้ว]:
+  1. เพิ่มไอเทม `"GoldRing"` ลงในตาราง `ItemData` ให้ครบถ้วน รองรับการดรอปจากบอส MVP `GoldenThiefBug` ป้องกัน Warning/Nil Error
+  2. ยกเลิกการสร้างตารางซ้ำซ้อนของ `Iron_Ore` และ `Sticky_Mucus` โดยใช้วิธีอ้างอิงตรง `ItemData.Iron_Ore = ItemData.IronOre` และ `ItemData.Sticky_Mucus = ItemData.StickyMucus` เรียบร้อย 100%
 
 ### 2.4 `src/shared/ItemRarity.lua`
 

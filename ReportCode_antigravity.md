@@ -486,25 +486,47 @@ end
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (17 ไฟล์)
+### ข้อเพิ่มเติม: การเพิ่มไอเทม GoldRing และแก้ Alias ไม่ให้คัดลอกซ้ำใน `ItemData.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/shared/ItemData.lua`
+* **สาเหตุ**:
+  * บอส MVP `GoldenThiefBug` ใน `MonsterData.lua` มีการกำหนดไอเทมดรอปคือ `GoldRing` แต่ในฐานข้อมูล `ItemData.lua` ไม่มีไอเทมนี้ ส่งผลให้เมื่อบอสตายและสุ่มตกไอเทม เกิด Warning/Nil Error หรือไอเทมไม่มีชื่อ/ข้อมูล
+  * ตัวแปร Alias `Iron_Ore` และ `Sticky_Mucus` ใช้วิธีสร้างตารางข้อมูล `{ name = ..., type = ... }` ขึ้นมาใหม่ซ้ำซ้อนกับ `IronOre` และ `StickyMucus`
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. เพิ่มข้อมูลไอเทม `GoldRing` ในตาราง `ItemData`
+  2. เปลี่ยน Alias `Iron_Ore` และ `Sticky_Mucus` เป็นการชี้ไปยังออบเจกต์ต้นฉบับโดยตรง (`ItemData.Iron_Ore = ItemData.IronOre`, `ItemData.Sticky_Mucus = ItemData.StickyMucus`) ไม่สร้างตารางซ้ำซ้อน
+
+```lua
+-- [เพิ่ม GoldRing ใน ItemData]:
+GoldRing = { name = "Gold Ring", type = "Material", sellPrice = 1500, description = "แหวนทองคำล้ำค่าจากรังแมลงทองคำ" },
+
+-- [ปรับการอ้างอิง Alias]:
+ItemData.Iron_Ore = ItemData.IronOre
+ItemData.Sticky_Mucus = ItemData.StickyMucus
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (18 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
-2. `d:\Robox\project01\src\server\DataStore.server.lua`
-3. `d:\Robox\project01\src\server\GameManager.server.lua`
-4. `d:\Robox\project01\src\server\CombatSystem.server.lua`
-5. `d:\Robox\project01\src\server\MonsterAI.server.lua`
-6. `d:\Robox\project01\src\server\JobAdvancementSystem.server.lua`
-7. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
-8. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
-9. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
-10. `d:\Robox\project01\src\client\CameraController.client.lua`
-11. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
-12. `d:\Robox\project01\src\client\CombatVFX.client.lua`
-13. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
-14. `d:\Robox\project01\src\client\UIManager.client.lua`
-15. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-16. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-17. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+2. `d:\Robox\project01\src\shared\ItemData.lua`
+3. `d:\Robox\project01\src\server\DataStore.server.lua`
+4. `d:\Robox\project01\src\server\GameManager.server.lua`
+5. `d:\Robox\project01\src\server\CombatSystem.server.lua`
+6. `d:\Robox\project01\src\server\MonsterAI.server.lua`
+7. `d:\Robox\project01\src\server\JobAdvancementSystem.server.lua`
+8. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
+9. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
+10. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
+11. `d:\Robox\project01\src\client\CameraController.client.lua`
+12. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+13. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+14. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+15. `d:\Robox\project01\src\client\UIManager.client.lua`
+16. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+17. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+18. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*

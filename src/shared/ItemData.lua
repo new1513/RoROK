@@ -140,10 +140,11 @@ local ItemData = {
 
 	-- ── Crafting / Enhancement ───────────────────────────────
 	BeginnerRefinementStone = { name = "Beginner Refinement Stone", type = "Material", buyPrice = 50, sellPrice = 15, description = "หินตีบวกอุปกรณ์ +1 ถึง +15 ที่โรงตีเหล็ก" },
-	-- ── ID Aliases (Backward & Drop Compatibility) ──────────
-	Iron_Ore        = { name = "Iron Ore",          type = "Material", sellPrice = 18 },
-	Sticky_Mucus    = { name = "Sticky Mucus",      type = "Material", sellPrice = 4  },
+	GoldRing        = { name = "Gold Ring",          type = "Material", sellPrice = 1500, description = "แหวนทองคำล้ำค่าจากรังแมลงทองคำ" },
 }
+-- ── ID Aliases (Backward & Drop Compatibility without duplicating tables) ──
+ItemData.Iron_Ore = ItemData.IronOre
+ItemData.Sticky_Mucus = ItemData.StickyMucus
 ItemData.Items = ItemData
 ItemData.GetItem = function(id)
 	return ItemData[id]
