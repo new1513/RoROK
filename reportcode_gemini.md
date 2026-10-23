@@ -546,10 +546,10 @@ elseif soundType == "crit" then
 
 ### 4.2 `src/client/CameraController.client.lua`
 
-* **จุดที่ 1 (บรรทัด 99, 120, 136–158)**:
-  1. `function ShakeCam(intensity, duration)` ประกาศเป็น Global Function โดยไม่ใส่ `local` หรือ `_G.ShakeCam`
-  2. `getSafeDistance` สร้าง `RaycastParams.new()` ใหม่ทุกเฟรม (`RenderStepped`) ทำให้เกิดภาระ Garbage Collection
-  3. `updateMovement()` ไม่ได้เช็ค `UserInputService:GetFocusedTextBox()` (เวลาพิมพ์แชทด้วยปุ่ม W/A/S/D ตัวละครจะเดินเอง) และเรียก `hum:Move(move, false)` ทุกเฟรมแม้ไม่ได้กดปุ่มเดิน (`move == Vector3.zero`) ซึ่งจะไปขัดจังหวะการสั่งเดิน `humanoid:MoveTo()` ของระบบ Auto-Battle และการคลิกเดินโจมตีมอนสเตอร์!
+* **จุดที่ 1 (บรรทัด 99, 120, 136–158)** [✅ แก้ไขแล้ว]:
+  1. ปรับ `ShakeCam` เป็น `local function ShakeCam` พร้อมประกาศ `_G.ShakeCam = ShakeCam` และเปลี่ยนจาก `tick()` เป็น `os.clock()`
+  2. ยกเลิกการสร้าง `RaycastParams.new()` ซ้ำทุกเฟรมใน `getSafeDistance` โดยสร้างไว้ภายนอกเป็นตัวแปร local ครั้งเดียว
+  3. แก้ไข `updateMovement()` ให้เช็ค `UserInputService:GetFocusedTextBox()` เพื่อไม่ให้เดินขณะพิมพ์แชท และใช้ตัวแปร `wasMovingManual` สั่ง `hum:Move(move, false)` เฉพาะเมื่อมีการกดปุ่มเดินจริง (`move.Magnitude > 0.01`) หรือหยุดเดินครั้งเดียว ไม่ส่ง `hum:Move(Vector3.zero)` รัวทุกเฟรมอีกต่อไป ทำให้ไม่ขัดจังหวะระบบบอท Auto-Battle (`humanoid:MoveTo()`) เรียบร้อย 100%
 
 ```lua
 -- [บรรทัด 145-158]

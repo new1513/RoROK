@@ -96,13 +96,13 @@ end)
 -- ─── Camera Shake / เขย่ากล้องตอนต่อสู้ ──────────────────
 -- intensity = ความรุนแรง (studs), duration = ระยะเวลา (วินาที)
 -- Global so other scripts (combat, etc.) can call ShakeCam(0.5, 0.3)
-function ShakeCam(intensity, duration)
+local function ShakeCam(intensity, duration)
     if isShaking then return end
     isShaking = true
     task.spawn(function()
-        local startTime = tick()
-        while tick() - startTime < duration do
-            local elapsed = tick() - startTime
+        local startTime = os.clock()
+        while os.clock() - startTime < duration do
+            local elapsed = os.clock() - startTime
             local fade    = 1 - (elapsed / duration)  -- fade out ตามเวลา
             local rx = (math.random() * 2 - 1) * intensity * fade
             local ry = (math.random() * 2 - 1) * intensity * fade
@@ -113,17 +113,19 @@ function ShakeCam(intensity, duration)
         isShaking = false
     end)
 end
+_G.ShakeCam = ShakeCam
 
 -- ─── Camera Collision via Raycast ─────────────────────────
 -- คืนค่าระยะกล้องที่ปลอดภัย (ไม่ทะลุผนัง/พื้น)
+local camRaycastParams = RaycastParams.new()
+camRaycastParams.FilterType = Enum.RaycastFilterType.Exclude
+
 local function getSafeDistance(origin, direction, maxDist)
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
     local char = player.Character
     if char then
-        params.FilterDescendantsInstances = {char}
+        camRaycastParams.FilterDescendantsInstances = {char}
     end
-    local result = workspace:Raycast(origin, direction * maxDist, params)
+    local result = workspace:Raycast(origin, direction * maxDist, camRaycastParams)
     if result then
         local dist = (result.Position - origin).Magnitude - COLLISION_PADDING
         return math.max(dist, 0.5)  -- ไม่ให้กล้องชิดตัวละครเกินไป
@@ -133,10 +135,19 @@ end
 
 -- ─── WASD Movement Relative to Camera Direction ────────────
 -- ให้ตัวละครเคลื่อนที่ตามทิศกล้อง (ไม่ใช่ world forward)
+local wasMovingManual = false
 local function updateMovement()
     local hum  = getHumanoid()
     local root = getRoot()
     if not hum or not root then return end
+
+    if UserInputService:GetFocusedTextBox() then
+        if wasMovingManual then
+            hum:Move(Vector3.zero, false)
+            wasMovingManual = false
+        end
+        return
+    end
 
     local yawRad    = math.rad(currentYaw)
     local camFwd    = Vector3.new(-math.sin(yawRad), 0, -math.cos(yawRad))
@@ -150,11 +161,13 @@ local function updateMovement()
 
     if move.Magnitude > 0.01 then
         move = move.Unit
-        -- หมุน root ให้หันตามทิศเดิน / face the direction of movement
         root.CFrame = CFrame.new(root.Position, root.Position + move)
+        hum:Move(move, false)
+        wasMovingManual = true
+    elseif wasMovingManual then
+        hum:Move(Vector3.zero, false)
+        wasMovingManual = false
     end
-
-    hum:Move(move, false)
 end
 
 -- ─── Main RenderStepped Loop / อัปเดตกล้องทุก frame ──────

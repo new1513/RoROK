@@ -340,7 +340,72 @@ end
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (16 ไฟล์)
+### ข้อเพิ่มเติม: การแก้ไขการเดินทับซ้อนบอท Auto-Battle และระบบกล้องใน `CameraController.client.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/client/CameraController.client.lua`
+* **สาเหตุ**:
+  * ฟังก์ชัน `updateMovement()` เดิมเรียก `hum:Move(move, false)` ทุกเฟรม แม้ว่าค่า `move` จะเป็น `Vector3.zero` (ผู้เล่นไม่ได้กดปุ่ม WASD) คำสั่งนี้จะไปลบล้าง (override) คำสั่ง `humanoid:MoveTo()` ของระบบบอท Auto-Battle หรือการคลิกเดิน ทำให้ตัวละครเดินสะดุดหรือยืนนิ่ง
+  * ไม่มีการตรวจจับ `UserInputService:GetFocusedTextBox()` ทำให้เมื่อผู้เล่นพิมพ์แชทหรือพิมพ์ข้อความที่มีตัวอักษร W, A, S, D ตัวละครจะเดินไปเอง
+  * ฟังก์ชัน `ShakeCam` ประกาศเป็น Global โดยไม่ใส่ `local` และใช้ `tick()`
+  * ฟังก์ชัน `getSafeDistance` สร้างอินสแตนซ์ `RaycastParams.new()` ใหม่ทุกเฟรมใน `RenderStepped` ทำให้เกิดภาระ Memory Allocation / Garbage Collection โดยไม่จำเป็น
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. เพิ่มตัวแปร `local wasMovingManual = false` ตรวจสอบสถานะการกดเดินของผู้เล่น
+  2. หากผู้เล่นกำลังโฟกัสกล่องข้อความ (`UserInputService:GetFocusedTextBox()`) ให้สั่งหยุดเดินครั้งเดียว (`hum:Move(Vector3.zero, false)`) หากก่อนหน้านี้กำลังเดินอยู่ แล้ว `return` ออกทันที
+  3. สั่ง `hum:Move(move, false)` เฉพาะเมื่อ `move.Magnitude > 0.01` เท่านั้น และเมื่อปล่อยปุ่มเดิน ให้ส่งสัญญาณหยุดเพียงครั้งเดียว (`elseif wasMovingManual then hum:Move(Vector3.zero, false); wasMovingManual = false end`)
+  4. ปรับ `ShakeCam` เป็น `local` พร้อม expose ผ่าน `_G.ShakeCam = ShakeCam` และใช้ `os.clock()`
+  5. ประกาศ `camRaycastParams` ครั้งเดียวภายนอกฟังก์ชัน `getSafeDistance`
+
+```lua
+-- [ก่อนแก้ใน updateMovement]:
+local move = Vector3.new(0, 0, 0)
+if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + camFwd end
+...
+if move.Magnitude > 0.01 then
+    move = move.Unit
+    root.CFrame = CFrame.new(root.Position, root.Position + move)
+end
+hum:Move(move, false) -- สั่งทุกเฟรมแม้ move เป็น 0
+
+-- [หลังแก้ใน updateMovement]:
+local wasMovingManual = false
+local function updateMovement()
+    local hum  = getHumanoid()
+    local root = getRoot()
+    if not hum or not root then return end
+
+    if UserInputService:GetFocusedTextBox() then
+        if wasMovingManual then
+            hum:Move(Vector3.zero, false)
+            wasMovingManual = false
+        end
+        return
+    end
+
+    local yawRad    = math.rad(currentYaw)
+    local camFwd    = Vector3.new(-math.sin(yawRad), 0, -math.cos(yawRad))
+    local camRight  = Vector3.new( math.cos(yawRad), 0, -math.sin(yawRad))
+
+    local move = Vector3.new(0, 0, 0)
+    if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + camFwd   end
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move - camFwd   end
+    if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move - camRight  end
+    if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + camRight  end
+
+    if move.Magnitude > 0.01 then
+        move = move.Unit
+        root.CFrame = CFrame.new(root.Position, root.Position + move)
+        hum:Move(move, false)
+        wasMovingManual = true
+    elseif wasMovingManual then
+        hum:Move(Vector3.zero, false)
+        wasMovingManual = false
+    end
+end
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (17 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\server\DataStore.server.lua`
@@ -351,13 +416,14 @@ end
 7. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
 8. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
 9. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
-10. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
-11. `d:\Robox\project01\src\client\CombatVFX.client.lua`
-12. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
-13. `d:\Robox\project01\src\client\UIManager.client.lua`
-14. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-15. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-16. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+10. `d:\Robox\project01\src\client\CameraController.client.lua`
+11. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+12. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+13. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+14. `d:\Robox\project01\src\client\UIManager.client.lua`
+15. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+16. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+17. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*
