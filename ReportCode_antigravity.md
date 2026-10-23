@@ -694,32 +694,81 @@ remoteName = "OpenWorldTravel",
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (24 ไฟล์)
+### ข้อเพิ่มเติม: การแก้ไขพิกัดท่าเรือ และเพิ่มเควสล่าบอสโลก Eddga / Turtle General ใน `DailyQuestData.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/shared/DailyQuestData.lua`
+* **สาเหตุ**:
+  * ในเควสประจำวัน `InspectHarbor` (ตรวจตราท่าเรือ Prontera) กำหนด `targetPos = Vector3.new(65, 2, 65)` ซึ่งชี้ไปผิดทิศ (ทิศตะวันออกเฉียงใต้) ไม่ตรงกับตำแหน่งจริงของท่าเรือขนส่งทางน้ำที่อยู่ทางทิศใต้ของเมือง (`Vector3.new(-68, 2, 232)`)
+  * ยังไม่มีเควสล่าบอสโลกประจำวันสำหรับผู้เล่นระดับสูง ทำให้เวลาตามหาบอสโลกไม่มีลูกศรนำทางบนมินิแมพ
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. แก้ไข `targetPos` ของเควส `InspectHarbor` เป็น `Vector3.new(-68, 2, 232)`
+  2. เพิ่มเควสประจำวัน `EddgaHunt` (ปราบพยัคฆ์เพลิง Eddga แห่ง Morroc) พิกัด `Vector3.new(950, 2, -162)`
+  3. เพิ่มเควสประจำวัน `TurtleGeneralHunt` (ปราบแม่ทัพเต่า Turtle General แห่ง Amatsu) พิกัด `Vector3.new(-950, 2, -162)`
+
+```lua
+-- [จุดที่แก้ใน DailyQuestData.lua]:
+{
+    id = "InspectHarbor",
+    title = "ตรวจตราท่าเรือ Prontera",
+    ...
+    location = "ท่าเรือ Prontera Harbor (ทางทิศใต้ของเมือง)",
+    targetPos = Vector3.new(-68, 2, 232),
+},
+{
+    id = "EddgaHunt",
+    title = "👑 ปราบพยัคฆ์เพลิง Eddga",
+    description = "ท้าทายบอสโลก Eddga แห่งทะเลทราย Morroc 1 ตัว",
+    objective = "Kill",
+    target = "Eddga",
+    amount = 1,
+    xp = 15000, jobXp = 10000, gold = 8000,
+    rewardItem = "WhitePotion", rewardItemCount = 5,
+    location = "ทะเลทราย Morroc (โซนบอสโลกทิศใต้)",
+    targetPos = Vector3.new(950, 2, -162),
+},
+{
+    id = "TurtleGeneralHunt",
+    title = "👑 ปราบแม่ทัพเต่า Turtle General",
+    description = "ท้าทายบอสโลก Turtle General แห่งเกาะซากุระ Amatsu 1 ตัว",
+    objective = "Kill",
+    target = "TurtleGeneral",
+    amount = 1,
+    xp = 22000, jobXp = 15000, gold = 12000,
+    rewardItem = "WhitePotion", rewardItemCount = 8,
+    location = "เกาะซากุระ Amatsu (ลานบอสโลกทิศใต้)",
+    targetPos = Vector3.new(-950, 2, -162),
+},
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (25 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
-3. `d:\Robox\project01\src\server\DataStore.server.lua`
-4. `d:\Robox\project01\src\server\GameManager.server.lua`
-5. `d:\Robox\project01\src\server\CombatSystem.server.lua`
-6. `d:\Robox\project01\src\server\MonsterAI.server.lua`
-7. `d:\Robox\project01\src\server\GuildSystem.server.lua`
-8. `d:\Robox\project01\src\server\JobAdvancementSystem.server.lua`
-9. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
-10. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
-11. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
-12. `d:\Robox\project01\src\server\StarterMap.server.lua`
-13. `d:\Robox\project01\src\server\TownStoryQuestSystem.server.lua`
-14. `d:\Robox\project01\src\client\CameraController.client.lua`
-15. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
-16. `d:\Robox\project01\src\client\CombatVFX.client.lua`
-17. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
-18. `d:\Robox\project01\src\client\UIManager.client.lua`
-19. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-20. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-21. `d:\Robox\project01\src\client\UI\MinimapView.lua`
-22. `d:\Robox\project01\src\client\UI\HotbarView.lua`
-23. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
-24. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+3. `d:\Robox\project01\src\shared\DailyQuestData.lua`
+4. `d:\Robox\project01\src\server\DataStore.server.lua`
+5. `d:\Robox\project01\src\server\GameManager.server.lua`
+6. `d:\Robox\project01\src\server\CombatSystem.server.lua`
+7. `d:\Robox\project01\src\server\MonsterAI.server.lua`
+8. `d:\Robox\project01\src\server\GuildSystem.server.lua`
+9. `d:\Robox\project01\src\server\JobAdvancementSystem.server.lua`
+10. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
+11. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
+12. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
+13. `d:\Robox\project01\src\server\StarterMap.server.lua`
+14. `d:\Robox\project01\src\server\TownStoryQuestSystem.server.lua`
+15. `d:\Robox\project01\src\client\CameraController.client.lua`
+16. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+17. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+18. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+19. `d:\Robox\project01\src\client\UIManager.client.lua`
+20. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+21. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+22. `d:\Robox\project01\src\client\UI\MinimapView.lua`
+23. `d:\Robox\project01\src\client\UI\HotbarView.lua`
+24. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
+25. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*

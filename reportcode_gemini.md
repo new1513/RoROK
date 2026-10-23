@@ -53,17 +53,9 @@ local CritRate = math.floor(LUK / 3) + 1
 
 ### 2.2 `src/shared/DailyQuestData.lua`
 
-* **จุดที่ 1 (บรรทัด 24, 211, 228)**: ข้อมูลสะอาดดี แต่พิกัด `targetPos` ของเควส `InspectHarbor` (`Vector3.new(65, 2, 65)`) ไม่ตรงกับจุดท่าเรือจริงใน `WorldMapExpansion.server.lua` (`Vector3.new(-68, 3.6, 266)`)
-
-```lua
--- [บรรทัด 214-229]
-{
-	id = "InspectHarbor",
-	...
-	targetPos = Vector3.new(65, 2, 65), -- ❌ [จุดที่เขียนไม่ดี]: พิกัดท่าเรือไม่ตรงกับตำแหน่งท่าเรือจริงใน StarterMap/WorldMapExpansion (-68, 4, 232)
-	-- ✅ [วิธีแก้]: ปรับ targetPos เป็น Vector3.new(-68, 2, 232) ให้ตรงกับท่าเรือ Prontera จริง
-},
-```
+* **จุดที่ 1 (บรรทัด 24, 211, 228)** [✅ แก้ไขแล้ว]:
+  1. ปรับ `targetPos` ของเควส `InspectHarbor` เป็น `Vector3.new(-68, 2, 232)` ให้ตรงกับตำแหน่งท่าเรือ Prontera ทางทิศใต้ของเมืองจริง 100%
+  2. เพิ่มเควสประจำวันล่าบอสโลก `EddgaHunt` (พิกัด Morroc `(950, 2, -162)`) และ `TurtleGeneralHunt` (พิกัด Amatsu `(-950, 2, -162)`) พร้อมพิกัดจริงเพื่อไม่ให้ลูกศรนำทางชี้ไปที่ `(0, 0, 0)` เรียบร้อยแล้ว
 
 ### 2.3 `src/shared/ItemData.lua`
 
