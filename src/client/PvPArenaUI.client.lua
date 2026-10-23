@@ -637,7 +637,7 @@ end)
 task.spawn(function()
 	task.wait(1)
 	local isPvP = (localPlayer:GetAttribute("Map") == "PvPArena")
-	local isSafe = localPlayer:GetAttribute("InPvPSafeZone") or true
+	local isSafe = localPlayer:GetAttribute("InPvPSafeZone") == true
 	pvpHudBar.Visible = isPvP
 	if isPvP and RE_GetPvPLeaderboard then
 		RE_GetPvPLeaderboard:FireServer()

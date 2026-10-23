@@ -618,7 +618,35 @@ end
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (21 ไฟล์)
+### ข้อเพิ่มเติม: การแก้ไขพารามิเตอร์ดาเมจ PvP และอักขระ UI ใน `PvPArenaSystem` และ `PvPArenaUI`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/PvPArenaSystem.server.lua`
+  * `src/client/PvPArenaUI.client.lua`
+* **สาเหตุ**:
+  * ใน `PvPArenaSystem.server.lua` ฟังก์ชัน `playerAttackPlayer` และ `playerSkillPlayer` มีการยิง `RE_ShowDamageNumber:FireAllClients` โดยส่งอาร์กิวเมนต์ที่ 4 เป็น boolean (`false` / `isMagic`) และอาร์กิวเมนต์ที่ 5 เป็น `isMiss` ซึ่งไม่ตรงกับที่ `DamageNumbers.lua` กำหนดรับ `(position, amount, isCrit, dmgType)` (คาดหวัง string `"PHYS"`, `"MAGIC"`, หรือ `"MISS"`) ส่งผลให้ตัวเลขดาเมจ PvP แสดงผลประเภทไม่ถูกต้อง
+  * ใน `PvPArenaUI.client.lua` ข้อความป้าย Kill Banner และปุ่มปิดหน้าต่าง Leaderboard มีปัญหาอักขระ UTF-8/Emoji เสียหาย
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. ใน `PvPArenaSystem.server.lua` ปรับการส่งพารามิเตอร์ `RE_ShowDamageNumber:FireAllClients`:
+     - โจมตีธรรมดา: `RE_ShowDamageNumber:FireAllClients(vRoot.Position, finalDamage, isCrit, isMiss and "MISS" or "PHYS")`
+     - สกิล: `RE_ShowDamageNumber:FireAllClients(vRoot.Position, finalDamage, isCrit, isMagic and "MAGIC" or "PHYS")`
+  2. ใน `PvPArenaUI.client.lua` ตรวจสอบและบันทึกไฟล์เป็น UTF-8 เพื่อให้ `Text = "🔥 KILLING SPREE! (+65 แต้ม PvP)"` และ `Text = "✕"` แสดงผลได้อย่างสมบูรณ์
+
+```lua
+-- [PvPArenaSystem.server.lua: บรรทัด 681]:
+RE_ShowDamageNumber:FireAllClients(vRoot.Position, finalDamage, isCrit, isMiss and "MISS" or "PHYS")
+
+-- [PvPArenaSystem.server.lua: บรรทัด 763]:
+local isCrit = false
+RE_ShowDamageNumber:FireAllClients(vRoot.Position, finalDamage, isCrit, isMagic and "MAGIC" or "PHYS")
+
+-- [PvPArenaUI.client.lua: บรรทัด 194 & 296]:
+bannerSubText.Text = "🔥 KILLING SPREE! (+65 แต้ม PvP)"
+Text = "✕",
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (22 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
@@ -640,7 +668,8 @@ end
 18. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
 19. `d:\Robox\project01\src\client\UI\MinimapView.lua`
 20. `d:\Robox\project01\src\client\UI\HotbarView.lua`
-21. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+21. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
+22. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*

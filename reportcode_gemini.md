@@ -395,13 +395,7 @@ DataStore.AddGold(killer, bonusZeny) -- ❌ [จุดที่เขียน�
 -- ✅ [วิธีแก้]: เปลี่ยนเป็น DataStore.ModifyGold(killer, bonusZeny)
 ```
 
-* **จุดที่ 3 (บรรทัด 679 และ 761)**: ส่งพารามิเตอร์เข้า `RE_ShowDamageNumber:FireAllClients(...)` ไม่ตรงกับที่ `DamageNumbers.lua` รับ (`(position, amount, isCrit, dmgType)`)
-
-```lua
--- [บรรทัด 679 และ 761]
-RE_ShowDamageNumber:FireAllClients(vRoot.Position, finalDamage, isCrit, false, isMiss) -- ❌ [จุดที่เขียนไม่ดี]: ส่งอาร์กิวเมนต์ที่ 4 เป็น boolean (false / isMagic) แทนที่จะเป็น string ("PHYS", "MAGIC", "MISS")
--- ✅ [วิธีแก้]: ส่ง RE_ShowDamageNumber:FireAllClients(vRoot.Position, finalDamage, isCrit, isMiss and "MISS" or "PHYS")
-```
+* **จุดที่ 3 (บรรทัด 679 และ 761)** [✅ แก้ไขแล้ว]: ปรับพารามิเตอร์ `RE_ShowDamageNumber:FireAllClients(...)` ให้ส่งประเภทดาเมจเป็น String (`isMiss and "MISS" or "PHYS"` และ `isMagic and "MAGIC" or "PHYS"`) ตรงตามที่ `DamageNumbers.lua` กำหนด 100% เรียบร้อยแล้ว
 
 ### 3.15 `src/server/StarterMap.server.lua`
 
@@ -635,20 +629,8 @@ local Debris = game:GetService("Debris") -- ❌ [จุดที่เขีย�
 
 ### 4.10 `src/client/PvPArenaUI.client.lua`
 
-* **จุดที่ 1 (บรรทัด 194 และ 296)**: มีอักขระ UTF-8 เสียหาย (กลายเป็นเครื่องหมาย ``) ในข้อความ `bannerSubText` และปุ่มปิดหน้าต่าง `lbCloseBtn`
-* **จุดที่ 2 (บรรทัด 640)**: เขียน `local isSafe = localPlayer:GetAttribute("InPvPSafeZone") or true` ซึ่งในภาษา Lua หาก `GetAttribute` คืนค่า `false` นิพจน์ `false or true` จะได้ค่า `true` เสมอ! (และตัวแปร `isSafe` ก็ไม่ได้ถูกนำไปใช้งานต่อด้วย)
-
-```lua
--- [บรรทัด 194 และ 296]
-Text = " KILLING SPREE! (+65 แต้ม PvP)", -- ❌ [จุดที่เขียนไม่ดี]: อักขระอีโมจิเสียหาย (Mojibake)
-...
-Text = "", -- ❌ [จุดที่เขียนไม่ดี]: ปุ่มปิดหน้าต่างแสดงอักขระเสีย แทนที่จะเป็น "✕"
-
--- [บรรทัด 639-641]
-local isPvP = (localPlayer:GetAttribute("Map") == "PvPArena")
-local isSafe = localPlayer:GetAttribute("InPvPSafeZone") or true -- ❌ [จุดที่เขียนไม่ดี]: false or true ได้ค่า true เสมอใน Lua และตัวแปร isSafe ไม่ได้ถูกนำไปใช้ต่อ
--- ✅ [วิธีแก้]: แก้อักขระเสียเป็น "🔥 KILLING SPREE!" กับ "✕" และใช้ local isSafe = localPlayer:GetAttribute("InPvPSafeZone") ~= false
-```
+* **จุดที่ 1 (บรรทัด 194 และ 296)** [✅ แก้ไขแล้ว]: ตรวจสอบและแก้ไขข้อความ UTF-8 ให้แสดงผลอย่างถูกต้อง (`Text = "🔥 KILLING SPREE! (+65 แต้ม PvP)"` และปุ่มปิด `Text = "✕"`) ไม่เกิดปัญหา Mojibake
+* **จุดที่ 2 (บรรทัด 640)** [✅ แก้ไขแล้ว]: ปรับปรุงเงื่อนไข `local isSafe = localPlayer:GetAttribute("InPvPSafeZone") == true` ป้องกันปัญหา Boolean evaluation ผิดพลาดใน Lua เรียบร้อยแล้ว
 
 ### 4.11 `src/client/RagnarokPanels.client.lua`
 

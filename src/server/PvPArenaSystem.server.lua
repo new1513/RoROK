@@ -679,7 +679,7 @@ local function playerAttackPlayer(attacker, victim)
 	local finalDamage = math.max(isMiss and 0 or 1, rawDamage)
 
 	-- Damage number display
-	RE_ShowDamageNumber:FireAllClients(vRoot.Position, finalDamage, isCrit, false, isMiss)
+	RE_ShowDamageNumber:FireAllClients(vRoot.Position, finalDamage, isCrit, isMiss and "MISS" or "PHYS")
 
 	-- Deduct victim HP
 	local newHP = math.max(0, victimHP - finalDamage)
@@ -761,7 +761,8 @@ local function playerSkillPlayer(attacker, victim, skillId, skillLevel)
 		finalDamage = math.max(1, math.floor(raw * PVP_DAMAGE_MODIFIER))
 	end
 
-	RE_ShowDamageNumber:FireAllClients(vRoot.Position, finalDamage, false, isMagic, false)
+	local isCrit = false
+	RE_ShowDamageNumber:FireAllClients(vRoot.Position, finalDamage, isCrit, isMagic and "MAGIC" or "PHYS")
 
 	local newHP = math.max(0, victimHP - finalDamage)
 	DataStore.SetHP(victim, newHP)
