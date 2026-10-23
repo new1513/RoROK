@@ -392,7 +392,7 @@ DataStore.AddGold(killer, bonusZeny) -- ❌ [จุดที่เขียน�
 
 ### 3.16 `src/server/TownShop.server.lua`
 
-* **จุดที่ 1 (บรรทัด 90–104 และ 149–154)**: ลูปหักไอเทมออกจาก `data.Inventory` เขียนซ้ำซ้อนกันใน `sellItem` และ `useConsumable` แทนที่จะเรียก ` dataApi.RemoveItem` และโค้ดสร้างโมเดลแม่ค้า `SupplyVendor` (บรรทัด 175–237) ซ้ำซ้อนกับสคริปต์ NPC อื่นๆ
+* **จุดที่ 1 (บรรทัด 90–104 และ 149–154)** [✅ แก้ไขแล้ว]: ปรับเปลี่ยนระบบหักไอเทมและยาใน `sellItem` และ `useConsumable` จากการวนลูป `table.remove` ในกระเป๋าเอง ให้เรียกใช้ `dataApi.HasItem` และ `dataApi.RemoveItem` ส่วนกลางของ DataStore (ซึ่งรองรับการจัดการไอเทม Alias อัตโนมัติ) เพื่อความเสถียรและลดความซ้ำซ้อนของโค้ด 100%
 
 ```lua
 -- [บรรทัด 99-104 และซ้ำที่บรรทัด 149-154]

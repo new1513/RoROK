@@ -87,21 +87,17 @@ sellItem.OnServerEvent:Connect(function(player, itemId, quantity)
 	if not sellableType or unitPrice <= 0 then return end
 	local data = dataApi.GetPlayerData(player)
 	if not data then return end
-	local entry
-	for _, owned in ipairs(data.Inventory or {}) do
-		if owned.itemId == itemId and (tonumber(owned.quantity) or 0) >= quantity then entry = owned; break end
+	local hasEnough = dataApi.HasItem and dataApi.HasItem(player, itemId, quantity)
+	if not hasEnough then
+		shopFeedback:FireClient(player, "มีไอเท็มไม่พอสำหรับขาย")
+		return
 	end
-	if not entry then
+	local removed = dataApi.RemoveItem(player, itemId, quantity)
+	if not removed then
 		shopFeedback:FireClient(player, "มีไอเท็มไม่พอสำหรับขาย")
 		return
 	end
 	local totalValue = unitPrice * quantity
-	entry.quantity -= quantity
-	if entry.quantity <= 0 then
-		for index, owned in ipairs(data.Inventory) do
-			if owned == entry then table.remove(data.Inventory, index); break end
-		end
-	end
 	dataApi.ModifyGold(player, totalValue)
 	local message = string.format("ขาย %s x%d ได้ %d z", item.name, quantity, totalValue)
 	sendInventory(player, data, message)
@@ -116,11 +112,7 @@ useConsumable.OnServerEvent:Connect(function(player, itemId)
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if not humanoid or humanoid.Health <= 0 then return end
-	local inventoryEntry
-	for _, entry in ipairs(data.Inventory or {}) do
-		if entry.itemId == itemId and (tonumber(entry.quantity) or 0) > 0 then inventoryEntry = entry; break end
-	end
-	if not inventoryEntry then return end
+	if not (dataApi.HasItem and dataApi.HasItem(player, itemId, 1)) then return end
 
 	local derived = dataApi.CalcDerivedStats(data)
 	local healedHP, restoredSP = 0, 0
@@ -146,12 +138,7 @@ useConsumable.OnServerEvent:Connect(function(player, itemId)
 	if coatEl and _G.CombatSystem and _G.CombatSystem.ApplyWeaponCoating then
 		_G.CombatSystem.ApplyWeaponCoating(player, coatEl, tonumber(item.use.Duration) or 300)
 	end
-	inventoryEntry.quantity -= 1
-	if inventoryEntry.quantity <= 0 then
-		for index, entry in ipairs(data.Inventory) do
-			if entry == inventoryEntry then table.remove(data.Inventory, index); break end
-		end
-	end
+	if not dataApi.RemoveItem(player, itemId, 1) then return end
 	if healedHP > 0 then
 		local root = character:FindFirstChild("HumanoidRootPart")
 		local healNumber = remotes:FindFirstChild("ShowHealNumber")

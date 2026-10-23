@@ -841,7 +841,39 @@ local hudTracker = makeInstance("Frame", {
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (27 ไฟล์)
+### ข้อเพิ่มเติม: การรวมศูนย์ระบบหักไอเทมและยาในร้านค้า `TownShop.server.lua` ผ่าน DataStore API
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/TownShop.server.lua`
+* **สาเหตุ**:
+  * ในการขายไอเทม (`sellItem`) และการกดใช้ไอเทมยา (`useConsumable`) มีการเขียนลูปค้นหาและลบไอเทมออกจาก `data.Inventory` ด้วย `table.remove` แบบ manual ซ้ำซ้อนกัน แทนที่จะเรียกใช้ `dataApi.HasItem` และ `dataApi.RemoveItem` ส่วนกลางของ DataStore ซึ่งรองรับการแปลงชื่อไอเทม Alias อัตโนมัติ
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ปรับเปลี่ยนใน `sellItem.OnServerEvent` ให้ใช้ `dataApi.HasItem(player, itemId, quantity)` และ `dataApi.RemoveItem(player, itemId, quantity)`
+  * ปรับเปลี่ยนใน `useConsumable.OnServerEvent` ให้ใช้ `dataApi.HasItem(player, itemId, 1)` และ `dataApi.RemoveItem(player, itemId, 1)`
+
+```lua
+-- [จุดที่ 1: ใน sellItem.OnServerEvent แทนที่ลูปเดิม]:
+local hasEnough = dataApi.HasItem and dataApi.HasItem(player, itemId, quantity)
+if not hasEnough then
+	shopFeedback:FireClient(player, "มีไอเท็มไม่พอสำหรับขาย")
+	return
+end
+local removed = dataApi.RemoveItem(player, itemId, quantity)
+if not removed then
+	shopFeedback:FireClient(player, "มีไอเท็มไม่พอสำหรับขาย")
+	return
+end
+local totalValue = unitPrice * quantity
+dataApi.ModifyGold(player, totalValue)
+
+-- [จุดที่ 2: ใน useConsumable.OnServerEvent]:
+if not (dataApi.HasItem and dataApi.HasItem(player, itemId, 1)) then return end
+...
+if not dataApi.RemoveItem(player, itemId, 1) then return end
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (28 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
@@ -858,18 +890,19 @@ local hudTracker = makeInstance("Frame", {
 13. `d:\Robox\project01\src\server\StarterMap.server.lua`
 14. `d:\Robox\project01\src\server\TownStoryQuestSystem.server.lua`
 15. `d:\Robox\project01\src\server\DailyQuestSystem.server.lua`
-16. `d:\Robox\project01\src\client\CameraController.client.lua`
-17. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
-18. `d:\Robox\project01\src\client\CombatVFX.client.lua`
-19. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
-20. `d:\Robox\project01\src\client\UIManager.client.lua`
-21. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-22. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-23. `d:\Robox\project01\src\client\UI\MinimapView.lua`
-24. `d:\Robox\project01\src\client\UI\HotbarView.lua`
-25. `d:\Robox\project01\src\client\UI\NpcDialogueUI.lua`
-26. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
-27. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+16. `d:\Robox\project01\src\server\TownShop.server.lua`
+17. `d:\Robox\project01\src\client\CameraController.client.lua`
+18. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+19. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+20. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+21. `d:\Robox\project01\src\client\UIManager.client.lua`
+22. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+23. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+24. `d:\Robox\project01\src\client\UI\MinimapView.lua`
+25. `d:\Robox\project01\src\client\UI\HotbarView.lua`
+26. `d:\Robox\project01\src\client\UI\NpcDialogueUI.lua`
+27. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
+28. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*
