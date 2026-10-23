@@ -51,32 +51,19 @@ local function isNearCraftingNpc(player)
 end
 
 local cooldowns = {}
-local function hasIngredients(inventory, requirements)
-	local totals = {}
-	for _, entry in ipairs(inventory or {}) do
-		if type(entry) == "table" then
-			totals[entry.itemId] = (totals[entry.itemId] or 0) + math.max(0, math.floor(tonumber(entry.quantity) or 0))
-		end
-	end
+local function hasIngredients(player, requirements)
 	for itemId, required in pairs(requirements) do
-		if (totals[itemId] or 0) < required then return false, itemId, required - (totals[itemId] or 0) end
+		local ok, count = dataApi.HasItem(player, itemId, required)
+		if not ok then
+			return false, itemId, required - (tonumber(count) or 0)
+		end
 	end
 	return true
 end
 
-local function consumeIngredients(inventory, requirements)
+local function consumeIngredients(player, requirements)
 	for itemId, required in pairs(requirements) do
-		local remaining = required
-		for index = #inventory, 1, -1 do
-			local entry = inventory[index]
-			if entry.itemId == itemId then
-				local take = math.min(remaining, math.max(0, math.floor(tonumber(entry.quantity) or 0)))
-				entry.quantity -= take
-				remaining -= take
-				if entry.quantity <= 0 then table.remove(inventory, index) end
-				if remaining <= 0 then break end
-			end
-		end
+		dataApi.RemoveItem(player, itemId, required)
 	end
 end
 
@@ -92,7 +79,7 @@ craftItem.OnServerEvent:Connect(function(player, outputId)
 	local recipe = recipes[outputId]
 	local data = dataApi.GetPlayerData(player)
 	if not data then return end
-	local hasAll, missingId, missingCount = hasIngredients(data.Inventory, recipe.ingredients)
+	local hasAll, missingId, missingCount = hasIngredients(player, recipe.ingredients)
 	if not hasAll then
 		feedback:FireClient(player, string.format("วัตถุดิบไม่พอ: %s ขาด %d", ItemData[missingId] and ItemData[missingId].name or missingId, missingCount))
 		return
@@ -102,7 +89,7 @@ craftItem.OnServerEvent:Connect(function(player, outputId)
 		return
 	end
 	if not ItemData[recipe.output] or not dataApi.ModifyGold(player, -recipe.zeny) then return end
-	consumeIngredients(data.Inventory, recipe.ingredients)
+	consumeIngredients(player, recipe.ingredients)
 	local added, inventory = dataApi.AddItem(player, recipe.output, recipe.quantity)
 	if not added then
 		-- Recipe output is validated above; refund if the data layer rejects it unexpectedly.

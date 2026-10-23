@@ -178,7 +178,7 @@ finalDamage = CalcPhysicalDamage(
 
 ### 3.2 `src/server/CraftingSystem.server.lua`
 
-* **จุดที่ 1 (บรรทัด 54–81)**: เขียนฟังก์ชัน `hasIngredients` และ `consumeIngredients` วนลูปเช็ค/ลบไอเทมในกระเป๋าเองซ้ำซ้อนกับ `DataStore.HasItem` และ `DataStore.RemoveItem` (และไม่รองรับไอเทม Alias อย่าง `Sticky_Mucus`)
+* **จุดที่ 1 (บรรทัด 54–81)** [✅ แก้ไขแล้ว]: ปรับฟังก์ชัน `hasIngredients` และ `consumeIngredients` ให้เรียกใช้ `dataApi.HasItem(player, itemId, required)` และ `dataApi.RemoveItem(player, itemId, required)` ของ DataStore โดยตรง ช่วยลดความซ้ำซ้อนของโค้ด และรองรับไอเทม Alias ทุกชนิด (`StickyMucus`/`Sticky_Mucus` และ `IronOre`/`Iron_Ore`) ได้อย่างสมบูรณ์แบบ 100%
 
 ```lua
 -- [บรรทัด 54-81]

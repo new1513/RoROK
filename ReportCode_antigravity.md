@@ -873,7 +873,38 @@ if not dataApi.RemoveItem(player, itemId, 1) then return end
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (28 ไฟล์)
+### ข้อเพิ่มเติม: การรวมศูนย์ระบบตรวจสอบและหักวัตถุดิบคราฟต์ใน `CraftingSystem.server.lua` ผ่าน DataStore API
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/CraftingSystem.server.lua`
+* **สาเหตุ**:
+  * ฟังก์ชัน `hasIngredients` และ `consumeIngredients` เดิมเขียนวนลูปนับจำนวนและลบไอเทมออกจากกระเป๋าเองซ้ำซ้อน และไม่ได้รองรับไอเทม Alias เช่น `Sticky_Mucus` ทำให้เมื่อมีไอเทมในกระเป๋าอาจตรวจสอบไม่ผ่าน
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ปรับฟังก์ชัน `hasIngredients(player, requirements)` ให้เรียก `dataApi.HasItem(player, itemId, required)`
+  * ปรับฟังก์ชัน `consumeIngredients(player, requirements)` ให้เรียก `dataApi.RemoveItem(player, itemId, required)`
+  * ส่ง `player` แทน `data.Inventory` ใน `craftItem.OnServerEvent`
+
+```lua
+-- [ใน CraftingSystem.server.lua]:
+local function hasIngredients(player, requirements)
+	for itemId, required in pairs(requirements) do
+		local ok, count = dataApi.HasItem(player, itemId, required)
+		if not ok then
+			return false, itemId, required - (tonumber(count) or 0)
+		end
+	end
+	return true
+end
+
+local function consumeIngredients(player, requirements)
+	for itemId, required in pairs(requirements) do
+		dataApi.RemoveItem(player, itemId, required)
+	end
+end
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (29 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
@@ -891,18 +922,19 @@ if not dataApi.RemoveItem(player, itemId, 1) then return end
 14. `d:\Robox\project01\src\server\TownStoryQuestSystem.server.lua`
 15. `d:\Robox\project01\src\server\DailyQuestSystem.server.lua`
 16. `d:\Robox\project01\src\server\TownShop.server.lua`
-17. `d:\Robox\project01\src\client\CameraController.client.lua`
-18. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
-19. `d:\Robox\project01\src\client\CombatVFX.client.lua`
-20. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
-21. `d:\Robox\project01\src\client\UIManager.client.lua`
-22. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-23. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-24. `d:\Robox\project01\src\client\UI\MinimapView.lua`
-25. `d:\Robox\project01\src\client\UI\HotbarView.lua`
-26. `d:\Robox\project01\src\client\UI\NpcDialogueUI.lua`
-27. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
-28. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+17. `d:\Robox\project01\src\server\CraftingSystem.server.lua`
+18. `d:\Robox\project01\src\client\CameraController.client.lua`
+19. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+20. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+21. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+22. `d:\Robox\project01\src\client\UIManager.client.lua`
+23. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+24. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+25. `d:\Robox\project01\src\client\UI\MinimapView.lua`
+26. `d:\Robox\project01\src\client\UI\HotbarView.lua`
+27. `d:\Robox\project01\src\client\UI\NpcDialogueUI.lua`
+28. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
+29. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*
