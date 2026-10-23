@@ -45,6 +45,8 @@ function CombatTargeting.init(player, playerGui, remotes, UITheme, hotbarView, h
 		end
 	end
 
+	local autoAttackEnabled = false
+
 	-- ── Cast Bar UI (หลอดร่ายเวทมนตร์ & DEX Scaling) ───────────
 	local castBarContainer = makeInstance("Frame", {
 		Name = "CastBarContainer",
@@ -393,7 +395,7 @@ function CombatTargeting.init(player, playerGui, remotes, UITheme, hotbarView, h
 	end)
 
 	-- ── Auto Attack & Manual Pursuit State ────────────────────
-	local autoAttackEnabled = false
+	autoAttackEnabled = false
 	local autoLockedMonster = nil
 	local manualPursuitActive = false
 	local manualPursuitGeneration = 0
@@ -699,6 +701,7 @@ function CombatTargeting.init(player, playerGui, remotes, UITheme, hotbarView, h
 		Text = "แสดงชนิดมอนเฉพาะที่อยู่ในระยะหาเป้า 50 studs • “ทั้งหมด” เลือกได้เสมอ",
 	}, autoSettingsContent)
 
+	local updatePotionInfoDisplay
 	local function refreshVisibleTargetFilters()
 		if updatePotionInfoDisplay then updatePotionInfoDisplay() end
 		local visibleTypes = {}
@@ -789,7 +792,7 @@ function CombatTargeting.init(player, playerGui, remotes, UITheme, hotbarView, h
 		Text = "ยาในกระเป๋า: ตรวจสอบ...", ZIndex = 7,
 	}, autoPotionFrame)
 
-	local function updatePotionInfoDisplay()
+	updatePotionInfoDisplay = function()
 		local inv = callbacks.getInventory and callbacks.getInventory() or {}
 		local counts = { WhitePotion = 0, YellowPotion = 0, OrangePotion = 0, RedPotion = 0, BluePotion = 0 }
 		for _, entry in ipairs(inv) do

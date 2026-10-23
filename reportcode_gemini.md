@@ -727,9 +727,9 @@ if remotes.updateCharData then
 
 ### 5.1 `src/client/UI/CombatTargeting.lua`
 
-* **จุดที่ 1 (บรรทัด 145)**: ในฟังก์ชัน `executeCast` อ้างอิงตัวแปร `autoAttackEnabled` ซึ่งถูกประกาศเป็น `local autoAttackEnabled = false` ในบรรทัดที่ 396 (ด้านล่างของไฟล์)! ในภาษา Lua การอ้างอิงตัวแปรที่ประกาศ `local` อยู่ด้านล่างของฟังก์ชันจะมองเห็นเป็นตัวแปร **Global `autoAttackEnabled` (ซึ่งมีค่าเป็น `nil` เสมอ)** ไม่ใช่ตัวแปร `local` ในบรรทัด 396!
+* **จุดที่ 1 (บรรทัด 145)** [✅ แก้ไขแล้ว]: ย้ายการประกาศ `local autoAttackEnabled = false` ขึ้นไปไว้ด้านบนก่อนฟังก์ชัน `executeCast` เพื่อให้มองเห็นค่า Scope ถูกต้องขณะร่ายสกิล
 * **จุดที่ 2 (บรรทัด 295 และ 375)**: สร้าง `RaycastParams.new()` ใหม่ทุกเฟรมใน `RenderStepped` (บรรทัด 295) และทุก 0.08 วินาทีใน `Heartbeat` (บรรทัด 375)
-* **จุดที่ 3 (บรรทัด 703)**: ในฟังก์ชัน `refreshVisibleTargetFilters` อ้างอิง `if updatePotionInfoDisplay then updatePotionInfoDisplay() end` แต่ `local function updatePotionInfoDisplay()` เพิ่งถูกประกาศในบรรทัด 792 (ด้านล่าง) ทำให้มองเห็นเป็น Global `nil` และไม่เคยถูกเรียกจริง!
+* **จุดที่ 3 (บรรทัด 703)** [✅ แก้ไขแล้ว]: ประกาศ `local updatePotionInfoDisplay` ล่วงหน้าก่อนฟังก์ชัน `refreshVisibleTargetFilters` และกำหนดนิยามฟังก์ชันที่บรรทัด 792 เพื่อให้สามารถอัปเดตจำนวนยาในกระเป๋าได้อย่างถูกต้อง
 
 ```lua
 -- [บรรทัด 145 (ภายใน executeCast)]

@@ -328,7 +328,19 @@ end
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (15 ไฟล์)
+### ข้อเพิ่มเติม: การแก้ไข Scope ตัวแปรและ Forward Declaration ใน `CombatTargeting.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/client/UI/CombatTargeting.lua`
+* **สาเหตุ**:
+  * ตัวแปร `local autoAttackEnabled = false` เดิมถูกประกาศไว้ที่บรรทัด 396 ด้านล่างของไฟล์ แต่ในฟังก์ชัน `executeCast` (บรรทัด 145) มีการเช็ค `if not autoAttackEnabled` ทำให้ Lua มองเห็นเป็น Global variable ซึ่งได้ค่า `nil` ตลอดเวลา
+  * ในฟังก์ชัน `refreshVisibleTargetFilters` มีการเรียก `if updatePotionInfoDisplay then updatePotionInfoDisplay() end` แต่ฟังก์ชัน `updatePotionInfoDisplay` เพิ่งถูกประกาศไว้ด้านล่างที่บรรทัด 792 ทำให้เงื่อนไขเป็น `nil` และไม่เคยรันจริง
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. ย้ายการประกาศ `local autoAttackEnabled = false` ขึ้นไปไว้ด้านบนก่อนฟังก์ชัน `cancelCast` และ `executeCast` แล้วที่บรรทัด 396 เปลี่ยนเป็นกำหนดค่า `autoAttackEnabled = false` (เอาคำว่า `local` ออก)
+  2. ทำ Forward Declaration `local updatePotionInfoDisplay` ไว้ก่อนฟังก์ชัน `refreshVisibleTargetFilters` และเปลี่ยนบรรทัด 792 เป็น `updatePotionInfoDisplay = function()`
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (16 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\server\DataStore.server.lua`
@@ -344,7 +356,8 @@ end
 12. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
 13. `d:\Robox\project01\src\client\UIManager.client.lua`
 14. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-15. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+15. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+16. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*
