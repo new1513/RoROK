@@ -14,6 +14,7 @@ function HotbarView.init(player, playerGui, remotes, UITheme, onCastSlotCallback
 	local makeInstance = UITheme.makeInstance
 
 	local skillData = require(ReplicatedStorage:WaitForChild("GameData"):WaitForChild("SkillData"))
+	local classData = require(ReplicatedStorage:WaitForChild("GameData"):WaitForChild("ClassData"))
 
 	local skillFeedbackRemote = remotes.skillFeedbackRemote or remotes.SkillFeedback
 	local shopFeedbackRemote = remotes.shopFeedbackRemote or remotes.ShopFeedback
@@ -257,7 +258,8 @@ function HotbarView.init(player, playerGui, remotes, UITheme, onCastSlotCallback
 
 		for sId, sLv in pairs(owned) do
 			local def = skillData[sId]
-			if (tonumber(sLv) or 0) > 0 and def and not def.isPassive and (def.class == class or def.class == "Novice") then
+			local canUse = (def and (def.class == class or def.class == "Novice" or (classData and classData.CanLearnSkill and classData.CanLearnSkill(class, def.class))))
+			if (tonumber(sLv) or 0) > 0 and def and not def.isPassive and canUse then
 				local alreadyInBar = false
 				for idx = 1, 8 do
 					if skillByClass[class][idx] == sId then

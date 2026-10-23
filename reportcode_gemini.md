@@ -745,18 +745,9 @@ return {
 
 ### 5.4 `src/client/UI/HotbarView.lua`
 
-* **จุดที่ 1 (บรรทัด 12, 150, 238–246, 249, 260)**:
-  1. พารามิเตอร์ `onOpenSkillTreeCallback` (บรรทัด 12) และตาราง `autoSkillCooldownUntil` (บรรทัด 249) ไม่เคยถูกนำไปใช้งานจริง
-  2. บรรทัด 150 เช็ค `tostring(i == 10 and 0 or i)` ในลูป `for i = 1, 8` ซึ่ง `i` ไม่มีทางเป็น 10
-  3. ตาราง `skillByClass` (บรรทัด 238–246) และเงื่อนไขใน `renderHotbar` (บรรทัด 260: `def.class == class or def.class == "Novice"`) ไม่รองรับคลาสขั้นที่ 2! เมื่อผู้เล่นเลื่อนขั้นเป็น 2nd Job สกิลของคลาส 1 (`def.class == "Knight"` ฯลฯ) จะไม่ถูกใส่ลงใน Hotbar อัตโนมัติ
-
-```lua
--- [บรรทัด 258-261]
-for sId, sLv in pairs(owned) do
-	local def = skillData[sId]
-	if (tonumber(sLv) or 0) > 0 and def and not def.isPassive and (def.class == class or def.class == "Novice") then -- ❌ [จุดที่เขียนไม่ดี]: ไม่ได้เช็คคลาสต้นทาง (ParentClass) ทำให้เมื่อเป็นคลาส 2 สกิลคลาส 1 จะไม่เข้าเงื่อนไขนี้
--- ✅ [วิธีแก้]: ใช้ ClassData.CanLearnSkill(class, def.class) แทนการเช็ค def.class == class
-```
+* **จุดที่ 1 (บรรทัด 12, 150, 238–246, 249, 260)** [✅ แก้ไขแล้ว]:
+  1. เพิ่ม `local classData = require(ReplicatedStorage:WaitForChild("GameData"):WaitForChild("ClassData"))`
+  2. ในฟังก์ชัน `renderHotbar` แก้ไขเงื่อนไขตรวจสอบการใช้งานสกิลเป็น `local canUse = (def and (def.class == class or def.class == "Novice" or (classData and classData.CanLearnSkill and classData.CanLearnSkill(class, def.class))))` เพื่อให้ผู้เล่นคลาส 2 (เช่น LordKnight, Wizard, Priest, Hunter, Assassin, Blacksmith) นำสกิลของคลาส 1 และ Novice มาใส่ใน Hotbar ใช้งานได้อย่างต่อเนื่อง 100% เรียบร้อยแล้ว
 
 ### 5.5 `src/client/UI/MinimapView.lua`
 

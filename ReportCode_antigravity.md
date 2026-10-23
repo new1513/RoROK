@@ -581,7 +581,44 @@ local isWorldBoss = obj:GetAttribute("IsWorldBoss") or mId == "Eddga" or mId == 
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (20 ไฟล์)
+### ข้อเพิ่มเติม: การรองรับสกิลคลาส 1 บน Hotbar เมื่อเลื่อนขั้นเป็นคลาส 2 ใน `HotbarView.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/client/UI/HotbarView.lua`
+* **สาเหตุ**:
+  * ในฟังก์ชัน `renderHotbar` มีการตรวจสอบเงื่อนไขแสดงสกิลบน Hotbar ด้วย `(def.class == class or def.class == "Novice")`
+  * เมื่อผู้เล่นเลื่อนขั้นเป็นคลาส 2 (เช่น LordKnight, Wizard, Priest, Hunter, Assassin, Blacksmith) ค่า `class` ของผู้เล่นจะเปลี่ยนเป็นชื่อคลาสใหม่ ทำให้สกิลของคลาสเดิม (เช่น สกิลคลาส Knight หรือ Mage) ไม่เข้าเงื่อนไข และหายไปจากแถบ Hotbar
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. เพิ่มการ require โมดูล `ClassData` ใน `HotbarView.lua`
+  2. แก้ไขเงื่อนไขการอนุญาตใช้งานสกิลใน `renderHotbar` โดยใช้ `classData.CanLearnSkill(class, def.class)` ตรวจสอบสายอาชีพ ทำให้คลาส 2 สามารถนำสกิลของคลาส 1 มาใส่บน Hotbar ใช้งานได้อย่างต่อเนื่อง
+
+```lua
+-- [จุดที่แก้ใน renderHotbar]:
+for sId, sLv in pairs(owned) do
+    local def = skillData[sId]
+    local canUse = (def and (def.class == class or def.class == "Novice" or (classData and classData.CanLearnSkill and classData.CanLearnSkill(class, def.class))))
+    if (tonumber(sLv) or 0) > 0 and def and not def.isPassive and canUse then
+        local alreadyInBar = false
+        for idx = 1, 8 do
+            if skillByClass[class][idx] == sId then
+                alreadyInBar = true
+                break
+            end
+        end
+        if not alreadyInBar then
+            for idx = 1, 8 do
+                if not skillByClass[class][idx] then
+                    skillByClass[class][idx] = sId
+                    break
+                end
+            end
+        end
+    end
+end
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (21 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
@@ -602,7 +639,8 @@ local isWorldBoss = obj:GetAttribute("IsWorldBoss") or mId == "Eddga" or mId == 
 17. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
 18. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
 19. `d:\Robox\project01\src\client\UI\MinimapView.lua`
-20. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+20. `d:\Robox\project01\src\client\UI\HotbarView.lua`
+21. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*
