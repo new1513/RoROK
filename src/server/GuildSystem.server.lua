@@ -84,9 +84,18 @@ local function serializeGuildsForClient(player)
 		})
 	end
 	table.sort(list, function(a, b) return a.houseLevel > b.houseLevel end)
+	local myGuildObj = nil
+	for _, gInfo in ipairs(list) do
+		if gInfo.id == myGuildId then
+			myGuildObj = gInfo
+			break
+		end
+	end
 	return {
 		myGuildId = myGuildId,
 		guilds    = list,
+		MyGuild   = myGuildObj,
+		GuildList = list,
 	}
 end
 
@@ -103,6 +112,11 @@ end
 RE_GuildAction.OnServerEvent:Connect(function(player, action, arg1, arg2)
 	local data = DataStore.GetPlayerData(player)
 	if not data then return end
+
+	if action == "RequestSync" then
+		RE_GuildUpdated:FireClient(player, serializeGuildsForClient(player))
+		return
+	end
 
 	if action == "Join" and type(arg1) == "string" then
 		local g = Guilds[arg1]
@@ -123,9 +137,9 @@ RE_GuildAction.OnServerEvent:Connect(function(player, action, arg1, arg2)
 			RE_SkillFeedback:FireClient(player, "ชื่อกิลด์ต้องยาว 2–28 ตัวอักษร")
 			return
 		end
-		local createCost = 100
+		local createCost = 500
 		if not DataStore.ModifyGold(player, -createCost) then
-			RE_SkillFeedback:FireClient(player, "ต้องการ 100 Zeny ในการก่อตั้งกิลด์")
+			RE_SkillFeedback:FireClient(player, "ต้องการ 500 Zeny ในการก่อตั้งกิลด์")
 			return
 		end
 		if data.GuildId and Guilds[data.GuildId] then

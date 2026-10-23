@@ -507,7 +507,45 @@ ItemData.Sticky_Mucus = ItemData.StickyMucus
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (18 ไฟล์)
+### ข้อเพิ่มเติม: การซิงค์ข้อมูลกิลด์ (MyGuild / GuildList / RequestSync) ใน `GuildSystem.server.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/GuildSystem.server.lua`
+* **สาเหตุ**:
+  * ฟังก์ชัน `serializeGuildsForClient` คืนค่าตาราง `{ myGuildId = ..., guilds = list }` แต่ฝั่งไคลเอนต์ (`ExpansionUI.client.lua`) อ่านจาก `payload.MyGuild` (ออบเจกต์กิลด์ของผู้เล่น) และ `payload.GuildList` (รายการกิลด์ทั้งหมด) ทำให้เมื่อเปิดหน้าต่างกิลด์ ไม่แสดงข้อมูลกิลด์ที่ตนเองอยู่และไม่แสดงรายชื่อกิลด์
+  * ฝั่งไคลเอนต์ส่งคำสั่ง `GuildAction:FireServer("RequestSync")` เมื่อเปิดหน้ากิลด์ แต่ใน `RE_GuildAction.OnServerEvent` ไม่รองรับแอ็กชัน `"RequestSync"` ทำให้ไม่ส่งข้อมูลกลับไป
+  * ค่าธรรมเนียมการตั้งกิลด์ใน Server คิด 100 Zeny แต่บนปุ่ม UI แสดง 500z
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. ใน `serializeGuildsForClient` ค้นหาข้อมูลกิลด์ของผู้เล่นและส่งฟิลด์ `MyGuild = myGuildObj` และ `GuildList = list` กลับไปให้ตรงกับ Client
+  2. ใน `RE_GuildAction.OnServerEvent` เพิ่มการเช็ค `if action == "RequestSync" then RE_GuildUpdated:FireClient(player, serializeGuildsForClient(player)); return end`
+  3. ปรับค่าสร้างกิลด์ใน Server เป็น 500 Zeny ให้ตรงกับ UI
+
+```lua
+-- [จุดที่ 1: การคืนค่าใน serializeGuildsForClient]:
+table.sort(list, function(a, b) return a.houseLevel > b.houseLevel end)
+local myGuildObj = nil
+for _, gInfo in ipairs(list) do
+    if gInfo.id == myGuildId then
+        myGuildObj = gInfo
+        break
+    end
+end
+return {
+    myGuildId = myGuildId,
+    guilds    = list,
+    MyGuild   = myGuildObj,
+    GuildList = list,
+}
+
+-- [จุดที่ 2: การรองรับ RequestSync]:
+if action == "RequestSync" then
+    RE_GuildUpdated:FireClient(player, serializeGuildsForClient(player))
+    return
+end
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (19 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
@@ -515,18 +553,19 @@ ItemData.Sticky_Mucus = ItemData.StickyMucus
 4. `d:\Robox\project01\src\server\GameManager.server.lua`
 5. `d:\Robox\project01\src\server\CombatSystem.server.lua`
 6. `d:\Robox\project01\src\server\MonsterAI.server.lua`
-7. `d:\Robox\project01\src\server\JobAdvancementSystem.server.lua`
-8. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
-9. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
-10. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
-11. `d:\Robox\project01\src\client\CameraController.client.lua`
-12. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
-13. `d:\Robox\project01\src\client\CombatVFX.client.lua`
-14. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
-15. `d:\Robox\project01\src\client\UIManager.client.lua`
-16. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-17. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-18. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+7. `d:\Robox\project01\src\server\GuildSystem.server.lua`
+8. `d:\Robox\project01\src\server\JobAdvancementSystem.server.lua`
+9. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
+10. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
+11. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
+12. `d:\Robox\project01\src\client\CameraController.client.lua`
+13. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+14. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+15. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+16. `d:\Robox\project01\src\client\UIManager.client.lua`
+17. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+18. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+19. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*

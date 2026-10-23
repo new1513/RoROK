@@ -275,16 +275,10 @@ if pData then
 
 ### 3.7 `src/server/GuildSystem.server.lua`
 
-* **จุดที่ 1 (บรรทัด 64–91 และ 103–213)**: โครงสร้างข้อมูลที่ส่งไปให้ Client (`{ myGuildId = ..., guilds = list }`) ไม่ตรงกับที่ `ExpansionUI.client.lua` อ่าน (`payload.MyGuild` และ `payload.GuildList`) และไม่รองรับแอ็กชัน `"RequestSync"` ที่ Client ส่งมา รวมถึงค่าสร้างกิลด์ใน Server คิด `100` Zeny แต่ปุ่มบน UI เขียนว่า `500z`
-
-```lua
--- [บรรทัด 87-90]
-return {
-	myGuildId = myGuildId, -- ❌ [จุดที่เขียนไม่ดี]: ชื่อฟิลด์ไม่ตรงกับ ExpansionUI.client.lua ที่อ่าน latestGuildState.MyGuild และ latestGuildState.GuildList
-	guilds    = list,
-}
--- ✅ [วิธีแก้]: ส่งฟิลด์ MyGuild (ตารางข้อมูลกิลด์ของผู้เล่น) และ GuildList = list ให้ตรงกับฝั่ง Client และเพิ่ม elseif action == "RequestSync" then RE_GuildUpdated:FireClient(player, serializeGuildsForClient(player))
-```
+* **จุดที่ 1 (บรรทัด 64–91 และ 103–213)** [✅ แก้ไขแล้ว]:
+  1. ปรับปรุง `serializeGuildsForClient` ให้ส่งทั้ง `MyGuild = myGuildObj` และ `GuildList = list` (รวมถึงคง `myGuildId` และ `guilds` เพื่อความเข้ากันได้) ทำให้หน้าต่างกิลด์ใน `ExpansionUI.client.lua` แสดงข้อมูลกิลด์ของผู้เล่นและรายชื่อกิลด์ได้อย่างสมบูรณ์
+  2. เพิ่มการจัดการแอ็กชัน `"RequestSync"` ใน `RE_GuildAction.OnServerEvent` ยิง `RE_GuildUpdated` ส่งข้อมูลกิลด์กลับไปยัง Client ทันทีที่เปิดหน้าต่างกิลด์
+  3. ปรับค่าสร้างกิลด์ใน Server ให้เป็น `500` Zeny ตรงกับปุ่ม UI (`500z`) 100% เรียบร้อยแล้ว
 
 ### 3.8 `src/server/ItemDropSystem.server.lua`
 
