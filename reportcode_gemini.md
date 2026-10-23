@@ -400,23 +400,9 @@ DataStore.AddGold(killer, bonusZeny) -- ❌ [จุดที่เขียน�
 ### 3.15 `src/server/StarterMap.server.lua`
 
 * **จุดที่ 1 (ทั้งไฟล์ 4,580 บรรทัด)**: ไฟล์มีขนาดใหญ่เกินไป (Monolithic 4,580 บรรทัด) รวมการสร้างภูมิประเทศ อาคาร เฟอร์นิเจอร์ โซนมอนสเตอร์ และ NPC ชาวบ้านไว้ในไฟล์เดียว และ `require` บริการ `ServerStorage` กับ `Lighting` (บรรทัด 43, 45) โดยไม่ได้ใช้งาน
-* **จุดที่ 2 (บรรทัด 913–929 และ 1319–1351)**:
-  1. `smithPrompt.Triggered` ยิงทั้ง `OpenNpcDialogue` และ `OpenRefinement` พร้อมกัน ทำให้หน้าต่างคุยเควสและหน้าต่างตีบวกเด้งซ้อนทับกัน
-  2. ผูก `OpenNpcDialogue` ที่ `StarterMap.server.lua` แล้วถูก `TownStoryQuestSystem.server.lua` (บรรทัด 393–398) มาผูก `.Triggered:Connect(...)` ซ้ำเป็นรอบที่ 2 บนปุ่มเดียวกัน!
-
-```lua
--- [บรรทัด 913-929]
-smithPrompt.Triggered:Connect(function(player)
-	local remotes = ReplicatedStorage:FindFirstChild("RemoteEvents")
-	if remotes then
-		local openNpcDialogue = remotes:FindFirstChild("OpenNpcDialogue")
-		if openNpcDialogue then openNpcDialogue:FireClient(player, "Blacksmith") end -- ❌ [จุดซ้ำซ้อน]: ยิงซ้ำกับ TownStoryQuestSystem.server.lua และเปิดหน้าต่างชนกับ OpenRefinement
-		local openRefinement = remotes:FindFirstChild("OpenRefinement")
-		if openRefinement then openRefinement:FireClient(player) end
-	end
-	-- ✅ [วิธีแก้]: ให้เปิดเฉพาะหน้าต่างตีบวก หรือมีตัวเลือกในบทสนทนา NPC เพื่อไม่ให้ 2 หน้าต่างเด้งทับกัน และไม่ผูก Triggered ซ้ำใน TownStoryQuestSystem
-end)
-```
+* **จุดที่ 2 (บรรทัด 913–929 และ 1319–1351)** [✅ แก้ไขแล้ว]:
+  1. ลบการยิง `OpenNpcDialogue:FireClient(player, "Blacksmith")` ใน `smithPrompt.Triggered` ออก ให้เปิดเฉพาะหน้าต่างตีบวก (`OpenRefinement:FireClient(player)`) เท่านั้น ไม่เด้ง 2 หน้าต่างซ้อนทับกัน
+  2. กำหนด `remoteName = "OpenWorldTravel"` ให้กับ `HarborMasterNPC` โดยตรง และไม่ยิง `OpenNpcDialogue` สำหรับ NPC ท่าเรือ ทำให้หน้าต่างแผนที่โลกเปิดเพียงหน้าต่างเดียวอย่างสมบูรณ์
 
 ### 3.16 `src/server/TownShop.server.lua`
 
@@ -438,18 +424,7 @@ end
 * **จุดที่ 1 (บรรทัด 105–116, 178–184, 218–229, 412–420)**:
   1. ฟังก์ชัน `getItemCount` ถูกประกาศซ้ำถึง 3 จุดในไฟล์เดียวกัน (และซ้ำกับ `DataStore.HasItem`)
   2. ใน `RE_AcceptStoryQuest` (บรรทัด 178–184) ตอนนับไอเทมเริ่มต้น ลืมเช็คชื่อ Alias (`Iron_Ore` / `Sticky_Mucus`) ต่างจากจุดอื่นในไฟล์เดียวกัน
-* **จุดที่ 2 (บรรทัด 393–398)**: ผูก `prompt.Triggered:Connect` ซ้ำลงบน `ProximityPrompt` ของ NPC ที่ `StarterMap.server.lua` ผูก `OpenNpcDialogue` ไว้แล้ว ทำให้เวลากดคุยกับ NPC เหตุการณ์จะถูกยิงซ้ำ 2 ครั้งซ้อน
-
-```lua
--- [บรรทัด 393-398]
-local prompt = npcModel:FindFirstChildWhichIsA("ProximityPrompt", true)
-if prompt then
-	prompt.Triggered:Connect(function(player) -- ❌ [จุดซ้ำซ้อน]: StarterMap.server.lua (buildInteriorNpc / smithPrompt) ผูก OpenNpcDialogue ไว้ที่ prompt นี้อยู่แล้ว ทำให้ยิง Remote ซ้ำ 2 รอบ
-		RE_OpenNpcDialogue:FireClient(player, quest.npcId)
-	end)
-	-- ✅ [วิธีแก้]: ตั้ง Attribute เช่น prompt:SetAttribute("StoryQuestBound", true) หรือจัดการที่จุดเดียวไม่ผูกซ้ำ
-end
-```
+* **จุดที่ 2 (บรรทัด 393–398)** [✅ แก้ไขแล้ว]: เพิ่มการเช็คตาราง `skipNpcs` (`BlacksmithNPC`, `PronteraGuard`, `KafraEmployee`, `Merchant Guildsman`, `Acolyte Sister`, `HarborMasterNPC`) และแอตทริบิวต์ `DialogueBound` ก่อนผูก Connection เพื่อไม่ให้ผูกฟังก์ชัน `OpenNpcDialogue` ซ้อนทับกับ NPC ที่ถูกจัดการไว้แล้วใน StarterMap ป้องกันการเด้ง 2 หน้าต่างซ้ำซ้อน 100%
 
 ### 3.18 `src/server/VisualRigAndLighting.server.lua`
 
@@ -468,22 +443,7 @@ cs.HandleSkillUse = function(player, skillId, skillLevel, targetId)
 ### 3.19 `src/server/WorldMapExpansion.server.lua`
 
 * **จุดที่ 1 (บรรทัด 55–74)**: ฟังก์ชัน `teleportPlayer` เขียนลอจิกเปลี่ยนแมพซ้ำกับ `GameManager.server.lua` (`RE_TeleportToMap`)
-* **จุดที่ 2 (บรรทัด 260–269)**: ผูก `hmPrompt.Triggered:Connect` ทับลงบน `HarborMasterNPC` โดยไม่ยกเลิก Connection เดิมจาก `StarterMap.server.lua` ทำให้กดคุยครั้งเดียวเปิดทั้งหน้าต่างบทสนทนา NPC และหน้าต่างแผนที่โลกซ้อนกัน
-
-```lua
--- [บรรทัด 260-269]
-local harborMaster = plaza and plaza:FindFirstChild("HarborMasterNPC", true)
-local hmPrompt = harborMaster and harborMaster:FindFirstChild("TalkToNpc", true)
-if hmPrompt then
-	hmPrompt.ActionText = "ออกเรือไปเมือง Morroc / Amatsu"
-	hmPrompt.Triggered:Connect(function(player) -- ❌ [จุดซ้ำซ้อน]: ผูก Triggered ซ้อนทับกับ buildInteriorNpc ใน StarterMap ทำให้เด้ง 2 หน้าต่างพร้อมกัน
-		local remotes = ReplicatedStorage:FindFirstChild("RemoteEvents")
-		local openTravel = remotes and remotes:FindFirstChild("OpenWorldTravel")
-		if openTravel then openTravel:FireClient(player) end
-	end)
-	-- ✅ [วิธีแก้]: กำหนด remoteName = "OpenWorldTravel" ใน npcSpec ของ HarborMasterNPC ตั้งแต่ใน StarterMap.server.lua
-end
-```
+* **จุดที่ 2 (บรรทัด 260–269)** [✅ แก้ไขแล้ว]: ลบบล็อก `hmPrompt.Triggered:Connect` ที่ซ้ำซ้อนใน `WorldMapExpansion.server.lua` ออก โดยกำหนด `remoteName = "OpenWorldTravel"` ให้กับ HarborMasterNPC ใน `StarterMap.server.lua` จุดเดียว ทำให้กดคุยเปิดหน้าต่างเดินเรือได้อย่างถูกต้อง ไม่เปิดหน้าต่างซ้อนทับกัน
 
 ## 4. รายงานตรวจสอบโค้ดรายไฟล์: โฟลเดอร์ `src/client/` (12 ไฟล์)
 

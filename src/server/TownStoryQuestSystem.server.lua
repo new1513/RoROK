@@ -391,7 +391,16 @@ task.spawn(function()
 
 			-- Enhance ProximityPrompt to fire OpenNpcDialogue
 			local prompt = npcModel:FindFirstChildWhichIsA("ProximityPrompt", true)
-			if prompt then
+			local skipNpcs = {
+				BlacksmithNPC = true,
+				PronteraGuard = true,
+				KafraEmployee = true,
+				["Merchant Guildsman"] = true,
+				["Acolyte Sister"] = true,
+				HarborMasterNPC = true,
+			}
+			if prompt and not prompt:GetAttribute("DialogueBound") and not skipNpcs[quest.npcId] and not skipNpcs[npcModel.Name] then
+				prompt:SetAttribute("DialogueBound", true)
 				prompt.Triggered:Connect(function(player)
 					RE_OpenNpcDialogue:FireClient(player, quest.npcId)
 				end)

@@ -916,10 +916,6 @@ smithPrompt.Triggered:Connect(function(player)
 
 	if remotes then
 
-		local openNpcDialogue = remotes:FindFirstChild("OpenNpcDialogue")
-
-		if openNpcDialogue then openNpcDialogue:FireClient(player, "Blacksmith") end
-
 		local openRefinement = remotes:FindFirstChild("OpenRefinement")
 
 		if openRefinement then openRefinement:FireClient(player) end
@@ -1324,7 +1320,7 @@ local function buildInteriorNpc(parentModel, originCF, npcSpec)
 
 		local openNpcDialogue = remotes:FindFirstChild("OpenNpcDialogue")
 
-		if openNpcDialogue and npcSpec.modelName then
+		if openNpcDialogue and npcSpec.modelName and npcSpec.remoteName ~= "OpenWorldTravel" then
 
 			openNpcDialogue:FireClient(player, npcSpec.modelName)
 
@@ -2870,9 +2866,9 @@ buildMedievalBuilding("HarborWarehouse", Vector3.new(-68, 0, 206), math.pi, "Lar
 
 	displayName = "กัปตันท่าเรือ Drake",
 
-	actionText = "สอบถามเส้นทางเดินเรือ",
+	actionText = "ออกเรือไปเมือง Morroc / Amatsu",
 
-	remoteName = "OpenDailyQuests",
+	remoteName = "OpenWorldTravel",
 
 	greeting = "ยินดีต้อนรับสู่ท่าเรือ Prontera! เรือไปเมืองทะเลทราย Morroc และเมืองน้ำ Amatsu กำลังเตรียมพร้อม!",
 

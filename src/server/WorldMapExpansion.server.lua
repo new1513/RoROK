@@ -256,18 +256,6 @@ task.spawn(function()
 		if openTravel then openTravel:FireClient(player) end
 	end)
 
-	-- อัปเดต NPC กัปตันท่าเรือ Drake ให้เปิดหน้าต่างเดินเรือข้ามเมืองได้ด้วย
-	local harborMaster = plaza and plaza:FindFirstChild("HarborMasterNPC", true)
-	local hmPrompt = harborMaster and harborMaster:FindFirstChild("TalkToNpc", true)
-	if hmPrompt then
-		hmPrompt.ActionText = "ออกเรือไปเมือง Morroc / Amatsu"
-		hmPrompt.Triggered:Connect(function(player)
-			local remotes = ReplicatedStorage:FindFirstChild("RemoteEvents")
-			local openTravel = remotes and remotes:FindFirstChild("OpenWorldTravel")
-			if openTravel then openTravel:FireClient(player) end
-		end)
-	end
-
 	-- (C) เสกมอนสเตอร์ประจำดันเจี้ยนใต้ดิน, เมืองทะเลทราย Morroc, เมืองน้ำ Amatsu และ World Boss!
 	local aiWait = 0
 	while (not _G.MonsterAI or not _G.MonsterAI.SpawnMonster) and aiWait < 15 do

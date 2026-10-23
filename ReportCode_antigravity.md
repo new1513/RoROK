@@ -646,7 +646,55 @@ Text = "✕",
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (22 ไฟล์)
+### ข้อเพิ่มเติม: การแก้ไขปัญหาหน้าต่าง NPC เด้งซ้อนกัน 2 หน้าต่าง (ช่างตีเหล็ก & กัปตันท่าเรือ)
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/StarterMap.server.lua`
+  * `src/server/TownStoryQuestSystem.server.lua`
+  * `src/server/WorldMapExpansion.server.lua`
+* **สาเหตุ**:
+  * เมื่อผู้เล่นคุยกับช่างตีเหล็ก (`smithPrompt`) โค้ดเดิมสั่งยิงทั้ง `OpenNpcDialogue` (เปิดหน้าต่างคุยเควส) และ `OpenRefinement` (เปิดหน้าต่างตีบวก) พร้อมกัน
+  * `TownStoryQuestSystem.server.lua` มีการวนลูปผูก `ProximityPrompt.Triggered:Connect` ซ้ำซ้อนลงบน NPC ที่มีอยู่แล้ว ทำให้ทุกครั้งที่กดคุยกับ NPC เหตุการณ์จะถูกยิงซ้ำ 2 รอบ
+  * เมื่อผู้เล่นคุยกับกัปตันท่าเรือ Drake (`HarborMasterNPC`) ใน `StarterMap` ผูกให้ยิง `OpenNpcDialogue` แต่ใน `WorldMapExpansion` มีการผูก `Triggered` ซ้ำอีกรอบเพื่อยิง `OpenWorldTravel` ทำให้หน้าต่างบทสนทนาและหน้าต่างแผนที่โลกเด้งซ้อนทับกัน
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. ใน `StarterMap.server.lua` บรรทัด 913–929 ลบการยิง `openNpcDialogue:FireClient(player, "Blacksmith")` ออก เหลือเฉพาะ `openRefinement:FireClient(player)`
+  2. ใน `TownStoryQuestSystem.server.lua` เพิ่มตาราง `skipNpcs` และเช็คแอตทริบิวต์ `DialogueBound` เพื่อข้ามการผูกซ้ำสำหรับ NPC ที่ระบบหลักจัดการอยู่แล้ว
+  3. ใน `StarterMap.server.lua` กำหนด `remoteName = "OpenWorldTravel"` ให้กับ `HarborMasterNPC` โดยตรง และไม่ยิง `OpenNpcDialogue` ซ้อน
+  4. ใน `WorldMapExpansion.server.lua` ลบบล็อก `hmPrompt.Triggered:Connect` ที่ซ้ำซ้อนออกทั้งหมด
+
+```lua
+-- [จุดที่ 1: smithPrompt ใน StarterMap.server.lua]:
+smithPrompt.Triggered:Connect(function(player)
+    local remotes = ReplicatedStorage:FindFirstChild("RemoteEvents")
+    if remotes then
+        local openRefinement = remotes:FindFirstChild("OpenRefinement")
+        if openRefinement then openRefinement:FireClient(player) end
+    end
+end)
+
+-- [จุดที่ 2: ป้องกันผูกซ้ำใน TownStoryQuestSystem.server.lua]:
+local skipNpcs = {
+    BlacksmithNPC = true,
+    PronteraGuard = true,
+    KafraEmployee = true,
+    ["Merchant Guildsman"] = true,
+    ["Acolyte Sister"] = true,
+    HarborMasterNPC = true,
+}
+if prompt and not prompt:GetAttribute("DialogueBound") and not skipNpcs[quest.npcId] and not skipNpcs[npcModel.Name] then
+    prompt:SetAttribute("DialogueBound", true)
+    prompt.Triggered:Connect(function(player)
+        RE_OpenNpcDialogue:FireClient(player, quest.npcId)
+    end)
+end
+
+-- [จุดที่ 3: HarborMasterNPC ใน StarterMap.server.lua]:
+actionText = "ออกเรือไปเมือง Morroc / Amatsu",
+remoteName = "OpenWorldTravel",
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (24 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
@@ -659,17 +707,19 @@ Text = "✕",
 9. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
 10. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
 11. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
-12. `d:\Robox\project01\src\client\CameraController.client.lua`
-13. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
-14. `d:\Robox\project01\src\client\CombatVFX.client.lua`
-15. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
-16. `d:\Robox\project01\src\client\UIManager.client.lua`
-17. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-18. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-19. `d:\Robox\project01\src\client\UI\MinimapView.lua`
-20. `d:\Robox\project01\src\client\UI\HotbarView.lua`
-21. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
-22. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+12. `d:\Robox\project01\src\server\StarterMap.server.lua`
+13. `d:\Robox\project01\src\server\TownStoryQuestSystem.server.lua`
+14. `d:\Robox\project01\src\client\CameraController.client.lua`
+15. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+16. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+17. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+18. `d:\Robox\project01\src\client\UIManager.client.lua`
+19. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+20. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+21. `d:\Robox\project01\src\client\UI\MinimapView.lua`
+22. `d:\Robox\project01\src\client\UI\HotbarView.lua`
+23. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
+24. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*
