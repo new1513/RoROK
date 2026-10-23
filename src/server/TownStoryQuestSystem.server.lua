@@ -40,6 +40,19 @@ local function getPlayerData(player)
 	return dataStore and dataStore.GetPlayerData(player)
 end
 
+local function getItemCount(pData, itemId)
+	if not pData or not pData.Inventory or type(itemId) ~= "string" then return 0 end
+	local altId = (itemId == "StickyMucus" and "Sticky_Mucus") or (itemId == "Sticky_Mucus" and "StickyMucus")
+	           or (itemId == "IronOre" and "Iron_Ore") or (itemId == "Iron_Ore" and "IronOre") or itemId
+	local total = 0
+	for _, entry in ipairs(pData.Inventory) do
+		if type(entry) == "table" and (entry.itemId == itemId or entry.itemId == altId) then
+			total += (tonumber(entry.quantity) or 1)
+		end
+	end
+	return total
+end
+
 -- ── 1. Quest State Resolver ───────────────────────────────────
 local function resolveNpcQuestState(player, npcId)
 	local pData = getPlayerData(player)
@@ -102,29 +115,16 @@ local function resolveNpcQuestState(player, npcId)
 		}
 	end
 
-	local function getItemCount(itemId)
-		if not pData.Inventory or type(itemId) ~= "string" then return 0 end
-		local altId = (itemId == "StickyMucus" and "Sticky_Mucus") or (itemId == "Sticky_Mucus" and "StickyMucus")
-		           or (itemId == "IronOre" and "Iron_Ore") or (itemId == "Iron_Ore" and "IronOre") or itemId
-		local total = 0
-		for _, entry in ipairs(pData.Inventory) do
-			if type(entry) == "table" and (entry.itemId == itemId or entry.itemId == altId) then
-				total += (tonumber(entry.quantity) or 1)
-			end
-		end
-		return total
-	end
-
 	-- In Progress or Ready to Claim
 	local currentProgress = tonumber(activeEntry.progress) or 0
 	local isReady = false
 
 	if quest.objective == "Collect" then
-		currentProgress = getItemCount(quest.target)
+		currentProgress = getItemCount(pData, quest.target)
 		activeEntry.progress = currentProgress
 		isReady = currentProgress >= quest.amount
 		if quest.secondaryCollectTarget then
-			local secCount = getItemCount(quest.secondaryCollectTarget)
+			local secCount = getItemCount(pData, quest.secondaryCollectTarget)
 			if secCount < (quest.secondaryCollectAmount or 1) then
 				isReady = false
 			end
@@ -132,7 +132,7 @@ local function resolveNpcQuestState(player, npcId)
 	elseif quest.objective == "Kill" then
 		isReady = currentProgress >= quest.amount
 		if quest.collectTarget then
-			local colCount = getItemCount(quest.collectTarget)
+			local colCount = getItemCount(pData, quest.collectTarget)
 			if colCount < (quest.collectAmount or 1) then
 				isReady = false
 			end
@@ -175,12 +175,8 @@ RE_AcceptStoryQuest.OnServerEvent:Connect(function(player, questId)
 	local initialProgress = 0
 	if quest.objective == "Visit" then
 		initialProgress = 1
-	elseif quest.objective == "Collect" and pData.Inventory then
-		for _, entry in ipairs(pData.Inventory) do
-			if entry.itemId == quest.target then
-				initialProgress += (tonumber(entry.quantity) or 1)
-			end
-		end
+	elseif quest.objective == "Collect" then
+		initialProgress = getItemCount(pData, quest.target)
 	end
 
 	pData.ActiveStoryQuests[quest.id] = {
@@ -215,28 +211,15 @@ RE_ClaimStoryQuest.OnServerEvent:Connect(function(player, questId)
 
 	local progress = tonumber(activeEntry.progress) or 0
 
-	local function getItemCount(itemId)
-		if not pData.Inventory or type(itemId) ~= "string" then return 0 end
-		local altId = (itemId == "StickyMucus" and "Sticky_Mucus") or (itemId == "Sticky_Mucus" and "StickyMucus")
-		           or (itemId == "IronOre" and "Iron_Ore") or (itemId == "Iron_Ore" and "IronOre") or itemId
-		local total = 0
-		for _, entry in ipairs(pData.Inventory) do
-			if type(entry) == "table" and (entry.itemId == itemId or entry.itemId == altId) then
-				total += (tonumber(entry.quantity) or 1)
-			end
-		end
-		return total
-	end
-
 	-- Verify objectives before claim
 	if quest.objective == "Collect" then
-		if getItemCount(quest.target) < quest.amount then return end
-		if quest.secondaryCollectTarget and getItemCount(quest.secondaryCollectTarget) < (quest.secondaryCollectAmount or 1) then
+		if getItemCount(pData, quest.target) < quest.amount then return end
+		if quest.secondaryCollectTarget and getItemCount(pData, quest.secondaryCollectTarget) < (quest.secondaryCollectAmount or 1) then
 			return
 		end
 	elseif quest.objective == "Kill" then
 		if progress < quest.amount then return end
-		if quest.collectTarget and getItemCount(quest.collectTarget) < (quest.collectAmount or 1) then
+		if quest.collectTarget and getItemCount(pData, quest.collectTarget) < (quest.collectAmount or 1) then
 			return
 		end
 	elseif quest.objective == "Visit" then
@@ -417,16 +400,8 @@ local function syncPlayerStoryQuest(player)
 		local quest = StoryQuestData.GetQuestById(qId)
 		if quest then
 			local progress = tonumber(activeEntry.progress) or 0
-			if quest.objective == "Collect" and pData.Inventory then
-				local count = 0
-				local altId = (quest.target == "StickyMucus" and "Sticky_Mucus") or (quest.target == "Sticky_Mucus" and "StickyMucus")
-				           or (quest.target == "IronOre" and "Iron_Ore") or (quest.target == "Iron_Ore" and "IronOre") or quest.target
-				for _, entry in ipairs(pData.Inventory) do
-					if type(entry) == "table" and (entry.itemId == quest.target or entry.itemId == altId) then
-						count += (tonumber(entry.quantity) or 1)
-					end
-				end
-				progress = count
+			if quest.objective == "Collect" then
+				progress = getItemCount(pData, quest.target)
 				activeEntry.progress = progress
 			end
 			RE_StoryQuestUpdate:FireClient(player, quest.id, "accepted", progress, quest.amount)

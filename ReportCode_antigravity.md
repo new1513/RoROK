@@ -780,6 +780,43 @@ end
 
 ---
 
+### ข้อเพิ่มเติม: การรวมฟังก์ชันกลาง getItemCount และรองรับ Alias ไอเทมใน `TownStoryQuestSystem.server.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/TownStoryQuestSystem.server.lua`
+* **สาเหตุ**:
+  * ฟังก์ชัน `getItemCount` ถูกประกาศซ้ำซ้อนภายในไฟล์ถึง 3 จุด (`resolveNpcQuestState`, `RE_ClaimStoryQuest`, และลูปใน `syncPlayerStoryQuest`)
+  * ใน `RE_AcceptStoryQuest` (ตอนผู้เล่นกดรับเควส) มีการวนลูปนับไอเทมเริ่มต้นในกระเป๋า แต่ลืมเช็คชื่อ Alias (`Iron_Ore` / `Sticky_Mucus`) ทำให้เควสเริ่มต้นด้วยความคืบหน้าที่ไม่ตรงกับไอเทมจริง
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. ประกาศฟังก์ชันกลาง `local function getItemCount(pData, itemId)` ไว้ใต้ `getPlayerData` เพียงจุดเดียว พร้อมเช็ค Alias ครบทุกประเภท
+  2. ปรับ `resolveNpcQuestState` และ `RE_ClaimStoryQuest` ให้ลบฟังก์ชันซ้ำซ้อนออกแล้วเรียกใช้ฟังก์ชันกลาง
+  3. ปรับ `RE_AcceptStoryQuest` และ `syncPlayerStoryQuest` ให้เรียก `getItemCount(pData, quest.target)` ป้องกันความคลาดเคลื่อน
+
+```lua
+-- [จุดที่ 1: ฟังก์ชันกลาง getItemCount]:
+local function getItemCount(pData, itemId)
+    if not pData or not pData.Inventory or type(itemId) ~= "string" then return 0 end
+    local altId = (itemId == "StickyMucus" and "Sticky_Mucus") or (itemId == "Sticky_Mucus" and "StickyMucus")
+               or (itemId == "IronOre" and "Iron_Ore") or (itemId == "Iron_Ore" and "IronOre") or itemId
+    local total = 0
+    for _, entry in ipairs(pData.Inventory) do
+        if type(entry) == "table" and (entry.itemId == itemId or entry.itemId == altId) then
+            total += (tonumber(entry.quantity) or 1)
+        end
+    end
+    return total
+end
+
+-- [จุดที่ 2: ใช้ใน RE_AcceptStoryQuest]:
+local initialProgress = 0
+if quest.objective == "Visit" then
+    initialProgress = 1
+elseif quest.objective == "Collect" then
+    initialProgress = getItemCount(pData, quest.target)
+end
+```
+
+---
+
 ## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (26 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`

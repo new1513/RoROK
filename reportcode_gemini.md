@@ -407,9 +407,9 @@ end
 
 ### 3.17 `src/server/TownStoryQuestSystem.server.lua`
 
-* **จุดที่ 1 (บรรทัด 105–116, 178–184, 218–229, 412–420)**:
-  1. ฟังก์ชัน `getItemCount` ถูกประกาศซ้ำถึง 3 จุดในไฟล์เดียวกัน (และซ้ำกับ `DataStore.HasItem`)
-  2. ใน `RE_AcceptStoryQuest` (บรรทัด 178–184) ตอนนับไอเทมเริ่มต้น ลืมเช็คชื่อ Alias (`Iron_Ore` / `Sticky_Mucus`) ต่างจากจุดอื่นในไฟล์เดียวกัน
+* **จุดที่ 1 (บรรทัด 105–116, 178–184, 218–229, 412–420)** [✅ แก้ไขแล้ว]:
+  1. ยุบฟังก์ชัน `getItemCount(pData, itemId)` มาประกาศเป็นฟังก์ชันกลางใต้ `getPlayerData` เพียงจุดเดียว พร้อมรองรับ Alias (`StickyMucus`/`Sticky_Mucus` และ `IronOre`/`Iron_Ore`) ครบถ้วน
+  2. ปรับให้ `resolveNpcQuestState`, `RE_AcceptStoryQuest`, `RE_ClaimStoryQuest`, และ `syncPlayerStoryQuest` เรียกใช้ฟังก์ชันกลางนี้ร่วมกันทั้งหมด ทำให้ตอนกดรับเควสนับจำนวนไอเทม Alias ได้ถูกต้องและไม่เขียนโค้ดซ้ำซ้อน 100%
 * **จุดที่ 2 (บรรทัด 393–398)** [✅ แก้ไขแล้ว]: เพิ่มการเช็คตาราง `skipNpcs` (`BlacksmithNPC`, `PronteraGuard`, `KafraEmployee`, `Merchant Guildsman`, `Acolyte Sister`, `HarborMasterNPC`) และแอตทริบิวต์ `DialogueBound` ก่อนผูก Connection เพื่อไม่ให้ผูกฟังก์ชัน `OpenNpcDialogue` ซ้อนทับกับ NPC ที่ถูกจัดการไว้แล้วใน StarterMap ป้องกันการเด้ง 2 หน้าต่างซ้ำซ้อน 100%
 
 ### 3.18 `src/server/VisualRigAndLighting.server.lua`
