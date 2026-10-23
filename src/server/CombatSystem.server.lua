@@ -99,37 +99,21 @@ end
 -- ============================================================
 
 local ElementMultiplier = {
-
-	--        Neutral  Fire  Water  Wind  Earth  Holy  Shadow  Ghost  Undead
-
-	Neutral = { 1.0,  1.0,  1.0,  1.0,  1.0,  1.0,   1.0,   0.25,  1.0   },
-
-	Fire    = { 1.0,  0.5,  0.5,  2.0,  1.0,  1.0,   1.0,   0.0,   1.5   },
-
-	Water   = { 1.0,  2.0,  0.25, 1.0,  1.0,  1.0,   1.0,   0.0,   1.0   },
-
-	Wind    = { 1.0,  1.0,  2.0,  0.25, 1.0,  1.0,   1.0,   0.0,   1.0   },
-
-	Earth   = { 1.0,  1.0,  1.0,  2.0,  0.25, 1.0,   1.0,   0.0,   1.0   },
-
-	Holy    = { 1.0,  1.0,  1.0,  1.0,  1.0,  0.5,   2.0,   1.0,   2.0   },
-
-	Shadow  = { 1.0,  1.0,  1.0,  1.0,  1.0,  2.0,   0.5,   1.0,   0.5   },
-
-	Ghost   = { 0.0,  1.0,  1.0,  1.0,  1.0,  1.0,   1.0,   1.5,   1.0   },
-
-	Undead  = { 1.0,  1.5,  1.0,  1.0,  1.0,  2.0,   0.5,   1.0,   0.0   },
-
+	--        Neutral  Fire  Water  Wind  Earth  Holy  Shadow  Ghost  Undead  Poison
+	Neutral = { 1.0,   1.0,  1.0,   1.0,  1.0,   1.0,  1.0,    0.25,  1.0,    1.0  },
+	Fire    = { 1.0,   0.5,  0.5,   2.0,  1.0,   1.0,  1.0,    0.0,   1.5,    1.0  },
+	Water   = { 1.0,   2.0,  0.25,  1.0,  1.0,   1.0,  1.0,    0.0,   1.0,    1.0  },
+	Wind    = { 1.0,   1.0,  2.0,   0.25, 1.0,   1.0,  1.0,    0.0,   1.0,    1.0  },
+	Earth   = { 1.0,   1.0,  1.0,   2.0,  0.25,  1.0,  1.0,    0.0,   1.0,    1.0  },
+	Holy    = { 1.0,   1.0,  1.0,   1.0,  1.0,   0.5,  2.0,    1.0,   2.0,    1.25 },
+	Shadow  = { 1.0,   1.0,  1.0,   1.0,  1.0,   2.0,  0.5,    1.0,   0.5,    0.5  },
+	Ghost   = { 0.0,   1.0,  1.0,   1.0,  1.0,   1.0,  1.0,    1.5,   1.0,    1.0  },
+	Undead  = { 1.0,   1.5,  1.0,   1.0,  1.0,   2.0,  0.5,    1.0,   0.0,    0.5  },
+	Poison  = { 1.0,   1.0,  1.0,   1.0,  1.0,   0.75, 0.5,    0.5,   0.5,    0.0  },
 }
-
--- Index ลำดับธาตุสำหรับ lookup
-
 local ELEMENT_INDEX = {
-
 	Neutral = 1, Fire = 2, Water = 3, Wind = 4,
-
-	Earth   = 5, Holy = 6, Shadow = 7, Ghost = 8, Undead = 9,
-
+	Earth = 5, Holy = 6, Shadow = 7, Ghost = 8, Undead = 9, Poison = 10,
 }
 
 -- ── ดึงมัลติพลายเออร์ธาตุ ──────────────────────────────────
@@ -338,7 +322,7 @@ local function ApplyStatusToPlayer(player, effectName, duration)
 
 			local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 
-			if hum then hum.WalkSpeed = 16 end
+			if hum then hum.WalkSpeed = player:GetAttribute("MoveSpeed") or 16 end
 
 		end
 
@@ -383,11 +367,10 @@ local function ApplyStatusToPlayer(player, effectName, duration)
 				end
 
 				if newHP <= 0 then
-
-					-- PlayerDied จัดการโดย MonsterAI
-
+					if _G.MonsterAI and _G.MonsterAI.PlayerDied then
+						_G.MonsterAI.PlayerDied(player)
+					end
 					break
-
 				end
 
 			end
@@ -1078,9 +1061,14 @@ KillMonster = function(monster, killerPlayer, partyMembers)
 					claimed = true
 
 					if Remotes.UpdateInventory then
-
-						Remotes.UpdateInventory:FireClient(player, inventory, dropEntry.itemId, qty)
-
+						local pData = DataStore.GetPlayerData(player)
+						Remotes.UpdateInventory:FireClient(
+							player,
+							inventory,
+							pData and pData.Equipment or {},
+							"เก็บ " .. (itemInfo and itemInfo.name or dropEntry.itemId) .. " x" .. tostring(qty),
+							pData and pData.EquipmentRefine or {}
+						)
 					end
 
 					if _G.DailyQuestSystem then

@@ -171,28 +171,10 @@ end
 
 ### 3.1 `src/server/CombatSystem.server.lua`
 
-* **จุดที่ 1 (บรรทัด 101–133)**: ตารางธาตุ `ElementMultiplier` และ `ELEMENT_INDEX` ไม่มีธาตุ `"Poison"` ทั้งที่มอนสเตอร์ `Spider` และ `PoisonSnake` ใน `MonsterData.lua` มี `Element = "Poison"`
-* **จุดที่ 2 (บรรทัด 333 และ 443)**: เมื่อหายจากสถานะ `Frozen`/`Stun` หรือล้างสถานะ จะบังคับตั้งค่า `hum.WalkSpeed = 16` เสมอ โดยไม่สนค่า `MoveSpeed` ของอาชีพหรือสถานะขี่สัตว์ (`PecoPecoMount` ความเร็ว 24)
-* **จุดที่ 3 (บรรทัด 377–383)**: เมื่อผู้เล่นโดนพิษ (`Poison`) จน `newHP <= 0` โค้ดสั่ง `break` เฉยๆ โดยเข้าใจผิดว่า `MonsterAI` จะจัดการให้ ทำให้ผู้เล่นเลือดเป็น 0 แต่ไม่ตายจริง
-
-```lua
--- [บรรทัด 377-384]
-if newHP <= 0 then
-	-- PlayerDied จัดการโดย MonsterAI -- ❌ [จุดที่เขียนไม่ดี]: MonsterAI ไม่ได้เช็คการตายจากพิษเอง ทำให้ผู้เล่นค้างที่ HP 0 โดยไม่ตายและไม่เกิดใหม่
-	break
-	-- ✅ [วิธีแก้]: เรียก if _G.MonsterAI and _G.MonsterAI.PlayerDied then _G.MonsterAI.PlayerDied(player) end ก่อน break
-end
-```
-
-* **จุดที่ 4 (บรรทัด 1004–1105 และ 1074)**: สร้างโมเดลของดรอปบนพื้นซ้ำซ้อนกับ `ItemDropSystem.server.lua` และส่งพารามิเตอร์เข้า `Remotes.UpdateInventory:FireClient(player, inventory, dropEntry.itemId, qty)` ผิดรูปแบบ (`UIManager.client.lua` คาดหวัง `(inventory, equipment, message, equipmentRefine)`)
-
-```lua
--- [บรรทัด 1072-1076]
-if Remotes.UpdateInventory then
-	Remotes.UpdateInventory:FireClient(player, inventory, dropEntry.itemId, qty) -- ❌ [จุดที่เขียนไม่ดี]: ส่งอาร์กิวเมนต์ที่ 2 เป็น string (itemId) แทนตาราง Equipment ทำให้ UIManager ไม่แสดงข้อความแจ้งเตือนและไม่อัปเดตช่องสวมใส่
-	-- ✅ [วิธีแก้]: ส่ง Remotes.UpdateInventory:FireClient(player, inventory, pData.Equipment or {}, "เก็บ " .. itemInfo.name .. " x" .. qty, pData.EquipmentRefine or {})
-end
-```
+* **จุดที่ 1 (บรรทัด 101–133)** [✅ แก้ไขแล้ว]: เพิ่มธาตุ `"Poison"` เป็นลำดับที่ 10 ในตาราง `ElementMultiplier` และ `ELEMENT_INDEX` ครบทุกมิติการคูณดาเมจทั้งฝั่งโจมตีและฝั่งป้องกัน
+* **จุดที่ 2 (บรรทัด 333 และ 443)** [✅ แก้ไขแล้ว]: ปรับให้คืนค่า `hum.WalkSpeed = player:GetAttribute("MoveSpeed") or 16` รองรับความเร็วของสัตว์ขี่ Peco Peco และบัฟสกิลต่างๆ
+* **จุดที่ 3 (บรรทัด 377–383)** [✅ แก้ไขแล้ว]: เมื่อผู้เล่นโดนพิษจน `newHP <= 0` เรียก `_G.MonsterAI.PlayerDied(player)` ก่อน `break` ทำให้ระบบจัดการการตายและเกิดใหม่ได้อย่างถูกต้อง
+* **จุดที่ 4 (บรรทัด 1004–1105 และ 1074)** [✅ แก้ไขแล้ว]: แก้ไขพารามิเตอร์ `Remotes.UpdateInventory:FireClient` เป็น `(player, inventory, pData.Equipment or {}, "เก็บ ... x...", pData.EquipmentRefine or {})` ตรงตามที่ `UIManager.client.lua` ฝั่ง Client ต้องการ 100%
 
 * **จุดที่ 5 (บรรทัด 1320–1350)** [✅ แก้ไขแล้ว]: ดึง `weaponRefineLevel` มาคิดโบนัสดาเมจ `refineATK = weaponRefineLevel * 6` และเจาะเกราะ `ignoreDefPercent` (รวมบัฟ AuraBlade +25%) ส่งเข้า `CalcPhysicalDamage` และ `CalcMagicDamage` เพิ่มพลังโจมตีทะลุเกราะตามจริง 100% เรียบร้อยแล้ว
 

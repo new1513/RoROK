@@ -439,6 +439,53 @@ end
 
 ---
 
+### ข้อเพิ่มเติม: ธาตุ Poison, การตายจากพิษ, และพารามิเตอร์ UpdateInventory ใน `CombatSystem.server.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/CombatSystem.server.lua`
+* **สาเหตุ**:
+  * ในตาราง `ElementMultiplier` และ `ELEMENT_INDEX` ไม่มีธาตุ `"Poison"` ทั้งที่มีมอนสเตอร์ธาตุ Poison (เช่น Spider, PoisonSnake) ส่งผลให้การคิดดาเมจธาตุพิษผิดพลาด
+  * เมื่อผู้เล่นโดนพิษจน `newHP <= 0` มีเพียงคำสั่ง `break` โดยไม่ได้เรียก `PlayerDied` ทำให้ผู้เล่น HP เป็น 0 แต่ไม่ตายจริงและไม่เกิดใหม่
+  * เมื่อผู้เล่นกดเก็บของดรอป มีการเรียก `Remotes.UpdateInventory:FireClient(player, inventory, dropEntry.itemId, qty)` ซึ่งส่งพารามิเตอร์ผิดลำดับ/ผิดประเภท (Client คาดหวัง `inventory, equipment, alertMessage, equipmentRefine`) ทำให้ไม่แสดงข้อความเก็บของและไม่อัปเดตช่องสวมใส่
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. เพิ่มแถวและคอลัมน์ของธาตุ `Poison` เป็นลำดับที่ 10 ใน `ElementMultiplier` และระบุ `Poison = 10` ใน `ELEMENT_INDEX`
+  2. ในลูปพิษของผู้เล่น เมื่อ `newHP <= 0` ให้เรียก `_G.MonsterAI.PlayerDied(player)` ก่อน `break`
+  3. ปรับการเรียก `Remotes.UpdateInventory:FireClient` ส่ง `(player, inventory, pData.Equipment or {}, "เก็บ " .. itemInfo.name .. " x" .. qty, pData.EquipmentRefine or {})` ให้ถูกต้องครบถ้วน
+
+```lua
+-- [จุดที่ 1: ตารางธาตุ Poison]:
+local ElementMultiplier = {
+    --        Neutral  Fire  Water  Wind  Earth  Holy  Shadow  Ghost  Undead  Poison
+    ...
+    Poison  = { 1.0,   1.0,  1.0,   1.0,  1.0,   0.75, 0.5,    0.5,   0.5,    0.0  },
+}
+local ELEMENT_INDEX = {
+    Neutral = 1, Fire = 2, Water = 3, Wind = 4,
+    Earth = 5, Holy = 6, Shadow = 7, Ghost = 8, Undead = 9, Poison = 10,
+}
+
+-- [จุดที่ 2: การตายจากพิษ]:
+if newHP <= 0 then
+    if _G.MonsterAI and _G.MonsterAI.PlayerDied then
+        _G.MonsterAI.PlayerDied(player)
+    end
+    break
+end
+
+-- [จุดที่ 3: พารามิเตอร์ UpdateInventory]:
+if Remotes.UpdateInventory then
+    local pData = DataStore.GetPlayerData(player)
+    Remotes.UpdateInventory:FireClient(
+        player,
+        inventory,
+        pData and pData.Equipment or {},
+        "เก็บ " .. (itemInfo and itemInfo.name or dropEntry.itemId) .. " x" .. tostring(qty),
+        pData and pData.EquipmentRefine or {}
+    )
+end
+```
+
+---
+
 ## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (17 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
