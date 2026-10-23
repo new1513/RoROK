@@ -988,6 +988,7 @@ local function stepMonster(monster, combat, now, dt)
 	local home = typeof(spawnPosition) == "Vector3" and (spawnPosition + Vector3.new(0, baseHeight, 0)) or root.Position
 
 	local speed = tonumber(monster:GetAttribute("MoveSpeed")) or DEFAULT_MOVE_SPEED
+	if monster:GetAttribute("StatusSlow") then speed = speed * 0.5 end
 
 	local isSlime = (mId == "Poring" or mId == "Fabre" or mId == "ThiefBug" or mId == "Lunatic")
 

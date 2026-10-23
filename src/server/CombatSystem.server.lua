@@ -218,6 +218,14 @@ local STATUS_EFFECTS = {
 
 	},
 
+	Slow = {
+
+		duration    = 15,
+
+		description = "เคลื่อนที่ช้าลง / Slow: move speed reduced",
+
+	},
+
 }
 
 local KillMonster -- forward declaration for lethal monster poison ticks
@@ -1367,6 +1375,11 @@ local function PlayerAttackMonster(player, monster, skillId)
 
 	-- ── Apply Damage to Monster ───────────────────────────
 
+	if monster:GetAttribute("StatusLexAeterna") then
+		finalDamage = finalDamage * 2
+		monster:SetAttribute("StatusLexAeterna", nil)
+	end
+
 	local newMonsterHP = math.max(0, monsterHP - finalDamage)
 
 	monster:SetAttribute("HP", newMonsterHP)
@@ -1744,6 +1757,8 @@ local PlayerBuffThreads = {}
 
 Players.PlayerRemoving:Connect(function(player)
 
+	ClearPlayerStatuses(player)
+
 	SkillCooldownUntil[player.UserId] = nil
 
 	PlayerBuffThreads[player.UserId] = nil
@@ -1800,7 +1815,7 @@ local function HandleSkillUse(player, skillId, skillLevel, targetId)
 
 	local targetMonster
 
-	if sData.isAttack then
+	if sData.isAttack or sData.isDebuff then
 
 		local skillRange = (tonumber(sData.range) or ClassData.GetBasicAttackRange(player:GetAttribute("Class") or data.Class or "Novice")) + 6
 
@@ -2060,6 +2075,15 @@ local function HandleSkillUse(player, skillId, skillLevel, targetId)
 
 		end
 
+	elseif sData.isDebuff and targetMonster then
+		local centerRoot = targetMonster:FindFirstChild("HumanoidRootPart") or targetMonster.PrimaryPart
+		local centerPos = centerRoot and centerRoot.Position or playerRoot.Position
+		vfxTargetPos = centerPos
+		if skillId == "LexAeterna" then
+			targetMonster:SetAttribute("StatusLexAeterna", true)
+		elseif skillId == "Quagmire" then
+			ApplyStatusToMonster(targetMonster, "Slow", sData.debuffDuration or 15)
+		end
 	end
 
 	if _G.GameManager and _G.GameManager.PushCharacterData then

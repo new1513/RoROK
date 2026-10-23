@@ -405,6 +405,40 @@ end
 
 ---
 
+### ข้อเพิ่มเติม: การรองรับสกิลประเภทดีบัฟ (`isDebuff`) ใน `CombatSystem.server.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/CombatSystem.server.lua`
+  * `src/server/MonsterAI.server.lua`
+* **สาเหตุ**:
+  * ในฟังก์ชัน `HandleSkillUse` เดิมเช็คเฉพาะ `if sData.isAttack then` เพื่อค้นหาและล็อกเป้าหมายมอนสเตอร์ (`targetMonster`) ทำให้สกิลที่เป็นประเภทดีบัฟ (`isDebuff = true`) เช่น `LexAeterna` และ `Quagmire` ไม่สามารถหาเป้าหมายมอนสเตอร์ได้
+  * ในบล็อกการทำงานของสกิลมีเพียง `if sData.isAttack and targetMonster then` แต่ไม่มีบล็อกสำหรับประมวลผลดีบัฟ ทำให้การร่ายสกิลดีบัฟไม่ส่งผลลัพธ์ใดๆ ต่อมอนสเตอร์
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. ใน `HandleSkillUse` บรรทัด 1802 แก้เป็น `if sData.isAttack or sData.isDebuff then` เพื่อให้สกิลดีบัฟสามารถค้นหาและตรวจสอบเป้าหมายมอนสเตอร์ได้เหมือนสกิลโจมตี
+  2. ต่อท้ายบล็อก `if sData.isAttack and targetMonster then` ด้วย `elseif sData.isDebuff and targetMonster then`:
+     - หากเป็น `LexAeterna` จะติดสถานะ `StatusLexAeterna` บนตัวมอนสเตอร์ (ทำให้การโจมตีครั้งถัดไปสร้างความเสียหาย 2 เท่า และล้างสถานะออก)
+     - หากเป็น `Quagmire` จะเรียก `ApplyStatusToMonster(targetMonster, "Slow", sData.debuffDuration or 15)`
+  3. เพิ่มสถานะ `Slow` ในตาราง `STATUS_EFFECTS` และผูกการลด `MoveSpeed` 50% ให้กับ AI มอนสเตอร์ใน `MonsterAI.server.lua`
+  4. เพิ่ม `ClearPlayerStatuses(player)` ใน `Players.PlayerRemoving` เพื่อล้างเธรดสถานะเมื่อผู้เล่นออกจากเซิร์ฟเวอร์ ป้องกัน Memory Leak
+
+```lua
+-- [จุดที่ 1: บรรทัด 1802 ใน HandleSkillUse]:
+if sData.isAttack or sData.isDebuff then
+
+-- [จุดที่ 2: ต่อท้ายบล็อก if sData.isAttack and targetMonster then]:
+elseif sData.isDebuff and targetMonster then
+    local centerRoot = targetMonster:FindFirstChild("HumanoidRootPart") or targetMonster.PrimaryPart
+    local centerPos = centerRoot and centerRoot.Position or playerRoot.Position
+    vfxTargetPos = centerPos
+    if skillId == "LexAeterna" then
+        targetMonster:SetAttribute("StatusLexAeterna", true)
+    elseif skillId == "Quagmire" then
+        ApplyStatusToMonster(targetMonster, "Slow", sData.debuffDuration or 15)
+    end
+end
+```
+
+---
+
 ## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (17 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`

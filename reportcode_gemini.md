@@ -208,7 +208,10 @@ finalDamage = CalcPhysicalDamage(
 )
 ```
 
-* **จุดที่ 6 (บรรทัด 1720–1728 และ 1862–1866)**: ใน `Players.PlayerRemoving` ลืมล้าง `PlayerStatusEffects[player.UserId]` และใน `HandleSkillUse` ไม่รองรับสกิลที่มี `sData.isDebuff` (`LexAeterna`, `Quagmire`)
+* **จุดที่ 6 (บรรทัด 1720–1728 และ 1862–1866)** [✅ แก้ไขแล้ว]:
+  1. เพิ่ม `ClearPlayerStatuses(player)` ใน `Players.PlayerRemoving` เพื่อยกเลิกเธรดสถานะผิดปกติและล้างข้อมูล `PlayerStatusEffects[player.UserId]` ป้องกัน Memory Leak
+  2. ใน `HandleSkillUse` ขยายเงื่อนไข `if sData.isAttack or sData.isDebuff then` เพื่อล็อกเป้าหมายมอนสเตอร์สำหรับสกิลดีบัฟ
+  3. เพิ่มการประมวลผลสกิล `sData.isDebuff` รองรับ `LexAeterna` (ตั้ง Attribute `StatusLexAeterna` เพื่อคูณ 2 ดาเมจครั้งถัดไป) และ `Quagmire` (เรียก `ApplyStatusToMonster(targetMonster, "Slow", duration)` ลดความเร็วเคลื่อนที่มอนสเตอร์ 50%) ครบถ้วน 100%
 
 ### 3.2 `src/server/CraftingSystem.server.lua`
 
