@@ -24,6 +24,7 @@ local ItemData    = require(GameData:WaitForChild("ItemData"))
 local DataStore
 local GameManager
 local RemotesFolder
+local leaveArena
 
 local t0 = tick()
 repeat
@@ -213,10 +214,10 @@ local function buildColosseumArena()
 	portalPrompt.Parent = portalSurface
 
 	portalPrompt.Triggered:Connect(function(player)
-		if GameManager and GameManager.TeleportPlayerToMap then
-			GameManager.TeleportPlayerToMap(player, "Prontera")
-		else
-			RE_LeavePvPArena:FireServer()
+		if leaveArena then
+			leaveArena(player)
+		elseif _G.PvPArenaSystem and _G.PvPArenaSystem.LeaveArena then
+			_G.PvPArenaSystem.LeaveArena(player)
 		end
 	end)
 
@@ -450,7 +451,7 @@ local function enterArena(player)
 	broadcastLeaderboard()
 end
 
-local function leaveArena(player)
+leaveArena = function(player)
 	local pData = DataStore.GetPlayerData(player)
 	if not pData then return end
 
@@ -546,7 +547,9 @@ local function handlePvPKill(killer, victim)
 		local bonusZeny   = 350 + (killerStats.Streak * 50)
 		killerStats.Points = (killerStats.Points or 0) + bonusPoints
 
-		DataStore.AddGold(killer, bonusZeny)
+		if DataStore then
+			(DataStore.ModifyGold or DataStore.AddGold)(killer, bonusZeny)
+		end
 
 		-- Streak Title
 		local streakTitle = ""

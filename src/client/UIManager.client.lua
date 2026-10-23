@@ -180,7 +180,9 @@ if remotes.updateCharData then
 	remotes.updateCharData.OnClientEvent:Connect(function(data)
 		latestData = data
 		hudView.updateData(data)
-		windowSystem.renderStats(data)
+		if _G.UpdateRagnarokData then
+			_G.UpdateRagnarokData(data)
+		end
 		hotbarView.renderHotbar(data)
 		if data.Inventory then
 			windowSystem.renderInventory(data.Inventory, data.Equipment, data.EquipmentRefine)

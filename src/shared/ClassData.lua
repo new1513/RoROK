@@ -536,14 +536,17 @@ function ClassData.CalculateDerivedStats(classID, level, STR, AGI, VIT, INT, DEX
 
 	local base = classInfo.BaseStats
 
-	-- ตั้งค่า equipStats ป้องกัน nil (Default equip stats to 0 if missing)
-	local eq = equipStats or {}
-	eq.HP   = eq.HP   or 0
-	eq.SP   = eq.SP   or 0
-	eq.ATK  = eq.ATK  or 0
-	eq.MATK = eq.MATK or 0
-	eq.DEF  = eq.DEF  or 0
-	eq.MDEF = eq.MDEF or 0
+	-- ตั้งค่า equipStats ป้องกัน nil (Default equip stats to 0 without mutating input table)
+	local eqHP       = (equipStats and (equipStats.MaxHP or equipStats.HP)) or 0
+	local eqSP       = (equipStats and (equipStats.MaxSP or equipStats.SP)) or 0
+	local eqATK      = (equipStats and equipStats.ATK) or 0
+	local eqMATK     = (equipStats and equipStats.MATK) or 0
+	local eqDEF      = (equipStats and equipStats.DEF) or 0
+	local eqMDEF     = (equipStats and equipStats.MDEF) or 0
+	local eqHIT      = (equipStats and equipStats.HIT) or 0
+	local eqFLEE     = (equipStats and equipStats.FLEE) or 0
+	local eqCritRate = (equipStats and (equipStats.CritRate or equipStats.Crit)) or 0
+	local eqASPD     = (equipStats and equipStats.ASPD) or 0
 
 	-- ตรวจสอบค่าสถิติขั้นต่ำ (Clamp stats to minimum 1)
 	STR   = math.max(1, STR   or 1)
@@ -557,17 +560,18 @@ function ClassData.CalculateDerivedStats(classID, level, STR, AGI, VIT, INT, DEX
 	-- ------------------------------------------------------------------
 	-- MaxHP & MaxSP: Ragnarok M 1:1 Scale
 	-- ------------------------------------------------------------------
-	local MaxHP = base.BaseHP + (VIT * 35) + (level * 30) + eq.HP
-	local MaxSP = base.BaseSP + (INT * 15) + (level * 10) + eq.SP
+	local MaxHP = base.BaseHP + (VIT * 35) + (level * 30) + eqHP
+	local MaxSP = base.BaseSP + (INT * 15) + (level * 10) + eqSP
 
 	-- ------------------------------------------------------------------
-	-- ATK: Status ATK + Equip ATK (Archer scales with DEX, others STR)
+	-- ATK: Status ATK + Equip ATK (Archer & Hunter scale with DEX, others STR)
 	-- ------------------------------------------------------------------
-	local mainPhysicalStat = classID == "Archer" and DEX or STR
-	local secondaryStat = classID == "Archer" and math.floor(STR / 5) or math.floor(DEX / 5)
+	local isBowClass = (classID == "Archer" or classID == "Hunter")
+	local mainPhysicalStat = isBowClass and DEX or STR
+	local secondaryStat = isBowClass and math.floor(STR / 5) or math.floor(DEX / 5)
 	local statusATK = base.BaseATK + (mainPhysicalStat * 2) + math.floor((mainPhysicalStat ^ 2) / 100)
 		+ secondaryStat + (level * 2)
-	local ATK = statusATK + eq.ATK
+	local ATK = statusATK + eqATK
 
 	-- ------------------------------------------------------------------
 	-- MATK: Status MATK + Equip MATK
@@ -575,31 +579,31 @@ function ClassData.CalculateDerivedStats(classID, level, STR, AGI, VIT, INT, DEX
 	local statusMATK = base.BaseMATK + (INT * 2) + math.floor((INT ^ 2) / 100)
 		+ math.floor(DEX / 5) + (level * 2)
 	local matkVar  = math.floor(INT / 4)
-	local MATK_min = statusMATK - matkVar + eq.MATK
-	local MATK_max = statusMATK + matkVar + eq.MATK
+	local MATK_min = statusMATK - matkVar + eqMATK
+	local MATK_max = statusMATK + matkVar + eqMATK
 
 	-- ------------------------------------------------------------------
 	-- DEF & MDEF: Ragnarok M 1:1 Hard DEF scaling
 	-- ------------------------------------------------------------------
-	local DEF = base.BaseDEF + math.floor(VIT * 1.5) + math.floor(level * 0.5) + eq.DEF
-	local MDEF = base.BaseMDEF + math.floor(INT * 1.2) + math.floor(level * 0.4) + eq.MDEF
+	local DEF = base.BaseDEF + math.floor(VIT * 1.5) + math.floor(level * 0.5) + eqDEF
+	local MDEF = base.BaseMDEF + math.floor(INT * 1.2) + math.floor(level * 0.4) + eqMDEF
 
 	-- ------------------------------------------------------------------
-	-- HIT & FLEE: Ragnarok M 1:1 Base + Stat + Level
+	-- HIT & FLEE: Ragnarok M 1:1 Base + Stat + Level + Equip
 	-- ------------------------------------------------------------------
-	local HIT = DEX + level + 20
-	local FLEE = AGI + level + 10
+	local HIT = DEX + level + 20 + eqHIT
+	local FLEE = AGI + level + 10 + eqFLEE
 
 	-- ------------------------------------------------------------------
-	-- ASPD = min(BaseASPD + floor(AGI*4), 190)
+	-- ASPD = min(BaseASPD + floor(AGI*4) + eqASPD, 190)
 	-- สูงสุด 190 (capped at 190 attacks/min)
 	-- ------------------------------------------------------------------
-	local ASPD = math.min(base.BaseASPD + math.floor(AGI * 4), 190)
+	local ASPD = math.min(base.BaseASPD + math.floor(AGI * 4) + eqASPD, 190)
 
 	-- ------------------------------------------------------------------
-	-- CritRate = floor(LUK/3) + 1
+	-- CritRate = floor(LUK/3) + 1 + eqCritRate
 	-- ------------------------------------------------------------------
-	local CritRate = math.floor(LUK / 3) + 1
+	local CritRate = math.floor(LUK / 3) + 1 + eqCritRate
 
 	-- ------------------------------------------------------------------
 	-- PerfectDodge = floor(LUK/10)

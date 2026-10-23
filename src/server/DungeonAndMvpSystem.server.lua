@@ -99,22 +99,19 @@ local function spawnTreasureChest(pos, bossId, killerPlayer)
 		prompt.Enabled = false
 
 		local goldBonus = 5000
-		DataStore.AddGold(player, goldBonus)
+		if DataStore then
+			(DataStore.ModifyGold or DataStore.AddGold)(player, goldBonus)
+			DataStore.AddItem(player, "BeginnerRefinementStone", 3)
+		end
 
-		-- Grant Refinement stones
-		local pData = DataStore.GetPlayerData(player)
-		if pData then
-			pData.Inventory = pData.Inventory or {}
-			table.insert(pData.Inventory, { itemId = "BeginnerRefinementStone", quantity = 3 })
-			
-			local cardId = (bossId == "GoldenThiefBug" and "GoldenThiefBugCard") or (bossId == "Drake" and "DrakeCard") or "EddgaCard"
-			if math.random(1, 100) <= 60 then
-				table.insert(pData.Inventory, { itemId = cardId, quantity = 1 })
-				if RE_SkillFeedback then
-					RE_SkillFeedback:FireClient(player, string.format("🎉 ยอดเยี่ยม! คุณได้รับ %s จากหีบสมบัติ MVP!", cardId))
-				end
+		local cardId = (bossId == "GoldenThiefBug" and "GoldenThiefBugCard") or (bossId == "Drake" and "DrakeCard") or "EddgaCard"
+		if math.random(1, 100) <= 60 then
+			if DataStore then
+				DataStore.AddItem(player, cardId, 1)
 			end
-			DataStore.SyncAttributes(player, pData)
+			if RE_SkillFeedback then
+				RE_SkillFeedback:FireClient(player, string.format("🎉 ยอดเยี่ยม! คุณได้รับ %s จากหีบสมบัติ MVP!", cardId))
+			end
 		end
 
 		if GameManager and GameManager.PushCharacterData then
@@ -137,141 +134,7 @@ local function spawnTreasureChest(pos, bossId, killerPlayer)
 	Debris:AddItem(chest, 90)
 end
 
--- ── 2. MVP BOSS SPAWN DEFINITIONS ────────────────────────────
-local MVP_SPAWNS = {
-	{
-		id = "GoldenThiefBug",
-		name = "Golden Thief Bug (Culvert MVP)",
-		map = "PronteraCulvert",
-		pos = Vector3.new(0, 5, -760),
-		scale = 2.4,
-		color = Color3.fromRGB(255, 200, 40),
-	},
-	{
-		id = "Drake",
-		name = "Captain Drake (Dungeon Boss)",
-		map = "PronteraCulvert",
-		pos = Vector3.new(0, 5, -840),
-		scale = 2.2,
-		color = Color3.fromRGB(130, 70, 210),
-	},
-	{
-		id = "Eddga",
-		name = "Eddga (Morroc World Boss)",
-		map = "Morroc",
-		pos = Vector3.new(950, 5, -150),
-		scale = 2.6,
-		color = Color3.fromRGB(240, 95, 30),
-	},
-}
+-- Export MVP Treasure Chest for CombatSystem when MVP boss dies
+_G.SpawnMvpTreasureChest = spawnTreasureChest
 
-local function spawnMVPBoss(spec)
-	local mData = MonsterData[spec.id]
-	if not mData then return end
-
-	local bossModel = Instance.new("Model")
-	bossModel.Name = spec.id
-	bossModel.Parent = mvpFolder
-
-	local root = Instance.new("Part")
-	root.Name = "HumanoidRootPart"
-	root.Size = Vector3.new(4 * spec.scale, 4 * spec.scale, 4 * spec.scale)
-	root.CFrame = CFrame.new(spec.pos + Vector3.new(0, 2.5 * spec.scale, 0))
-	root.Material = Enum.Material.Neon
-	root.Color = spec.color
-	root.Anchored = false
-	root.CanCollide = true
-	root.Parent = bossModel
-	bossModel.PrimaryPart = root
-
-	local humanoid = Instance.new("Humanoid")
-	humanoid.MaxHealth = mData.MaxHP
-	humanoid.Health = mData.MaxHP
-	humanoid.WalkSpeed = mData.MoveSpeed or 9
-	humanoid.Parent = bossModel
-
-	-- Set Boss Attributes
-	bossModel:SetAttribute("MonsterID", spec.id)
-	bossModel:SetAttribute("HP", mData.MaxHP)
-	bossModel:SetAttribute("MaxHP", mData.MaxHP)
-	bossModel:SetAttribute("ATK", mData.ATK)
-	bossModel:SetAttribute("DEF", mData.DEF)
-	bossModel:SetAttribute("MDEF", mData.MDEF)
-	bossModel:SetAttribute("Element", mData.Element or "Neutral")
-	bossModel:SetAttribute("Level", mData.Level or 50)
-	bossModel:SetAttribute("IsBoss", true)
-	bossModel:SetAttribute("IsMVP", true)
-	bossModel:SetAttribute("MapName", spec.map)
-
-	-- Overhead Title Billboard
-	local bb = Instance.new("BillboardGui")
-	bb.Name = "BossBillboard"
-	bb.Size = UDim2.new(0, 320, 0, 58)
-	bb.StudsOffset = Vector3.new(0, 3.5 * spec.scale, 0)
-	bb.MaxDistance = 70
-	bb.AlwaysOnTop = false
-	bb.Parent = root
-
-	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Size = UDim2.new(1, 0, 0, 24)
-	nameLabel.BackgroundTransparency = 1
-	nameLabel.Text = "👑 " .. (mData.Name or spec.name)
-	nameLabel.TextColor3 = Color3.fromRGB(255, 215, 60)
-	nameLabel.TextStrokeTransparency = 0.1
-	nameLabel.TextStrokeColor3 = Color3.fromRGB(15, 20, 30)
-	nameLabel.Font = Enum.Font.GothamBold
-	nameLabel.TextSize = 15
-	nameLabel.Parent = bb
-
-	local hpBarBg = Instance.new("Frame")
-	hpBarBg.Size = UDim2.new(0.85, 0, 0, 10)
-	hpBarBg.Position = UDim2.new(0.075, 0, 0, 28)
-	hpBarBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-	hpBarBg.BorderSizePixel = 0
-	hpBarBg.Parent = bb
-
-	local hpFill = Instance.new("Frame")
-	hpFill.Name = "Fill"
-	hpFill.Size = UDim2.new(1, 0, 1, 0)
-	hpFill.BackgroundColor3 = Color3.fromRGB(240, 50, 50)
-	hpFill.BorderSizePixel = 0
-	hpFill.Parent = hpBarBg
-
-	-- Boss Heartbeat & Death listener
-	local isDead = false
-	bossModel:GetAttributeChangedSignal("HP"):Connect(function()
-		local curHP = bossModel:GetAttribute("HP") or 0
-		local maxHP = bossModel:GetAttribute("MaxHP") or 1
-		hpFill.Size = UDim2.new(math.clamp(curHP / maxHP, 0, 1), 0, 1, 0)
-
-		if curHP <= 0 and not isDead then
-			isDead = true
-			local killerName = bossModel:GetAttribute("LastHitPlayer") or "เหล่านักผจญภัย"
-			local killerClass = bossModel:GetAttribute("LastHitClass") or "Adventurer"
-
-			if RE_SkillFeedback then
-				RE_SkillFeedback:FireAllClients(string.format("🏆 [MVP DEFEATED] บอส %s ถูกปราบแล้วโดย %s (%s)!", spec.name, killerName, killerClass))
-			end
-
-			spawnTreasureChest(root.Position, spec.id, nil)
-			bossModel:Destroy()
-
-			-- Schedule respawn
-			task.delay(mData.RespawnTime or 90, function()
-				spawnMVPBoss(spec)
-			end)
-		end
-	end)
-
-	print("[DungeonAndMvpSystem] Spawned MVP Boss:", spec.name, "at", tostring(spec.pos))
-end
-
--- Spawn all MVP Bosses
-for _, spec in ipairs(MVP_SPAWNS) do
-	task.spawn(function()
-		task.wait(1.5)
-		spawnMVPBoss(spec)
-	end)
-end
-
-print("[DungeonAndMvpSystem] Instanced Dungeon & MVP Boss Raid system initialized successfully")
+print("[DungeonAndMvpSystem] Instanced Dungeon & MVP Boss Treasure Chest system initialized successfully")

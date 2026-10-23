@@ -397,11 +397,13 @@ local function StartRegenLoop(player)
 			if not data then break end
 
 			local derived = DataStore.CalcDerivedStats(data)
+			local changed = false
 
 			-- HP keeps its slower 10-second tick.
 			if hpRegenElapsed >= 10 and data.HP < derived.MaxHP then
 				local newHP = math.min(data.HP + derived.HPRegen, derived.MaxHP)
 				DataStore.SetHP(player, newHP)
+				changed = true
 			end
 			if hpRegenElapsed >= 10 then hpRegenElapsed = 0 end
 
@@ -415,16 +417,17 @@ local function StartRegenLoop(player)
 					DataStore.SetSP(player, newSP)
 					spRegenAccumulator -= restoredSP
 					if newSP >= derived.MaxSP then spRegenAccumulator = 0 end
-				end
+					changed = true
+			end
 			else
 				spRegenAccumulator = 0
 			end
 
-			-- อัพเดต derived stats ผ่าน SyncAttributes
-			DataStore.SyncAttributes(player, data)
-
-			-- แจ้ง client ให้อัพเดต UI
-			PushCharacterData(player)
+			-- อัพเดต derived stats และแจ้ง client เฉพาะเมื่อมีการเปลี่ยนแปลงจริง
+			if changed then
+				DataStore.SyncAttributes(player, data)
+				PushCharacterData(player)
+			end
 		end
 	end)
 
@@ -474,7 +477,6 @@ local function BindCharacterRespawn(player)
 		-- รอให้ character ตั้งค่าเสร็จ แล้วย้ายกลับเมืองก่อนเปิดรับความเสียหาย
 		task.wait(0.25)
 		SpawnPlayerAtMap(player, data.Map or "Prontera")
-	BindCharacterRespawn(player)
 		if wasDeathRespawn then
 			local maxHP = player:GetAttribute("MaxHP") or 40
 			DataStore.SetHP(player, math.max(1, math.floor(maxHP * 0.25)))
@@ -503,6 +505,9 @@ local function SetupPlayer(player)
 		initializedPlayers[player.UserId] = nil
 		return
 	end
+
+	-- ── 0. Bind respawn listener ─────────────────────────
+	BindCharacterRespawn(player)
 
 	-- ── 1. Sync attributes (ซิงค์ Attribute) ──────────────
 	DataStore.SyncAttributes(player, data)

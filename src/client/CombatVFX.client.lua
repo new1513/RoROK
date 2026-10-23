@@ -314,9 +314,9 @@ local function playSkillVFX(casterPlayer, targetPos, skillId)
 				spawnImpactBurst(targetPos, color, 0.95)
 			end)
 		end
-	elseif className == "Archer" or skillId == "DoubleStrafe" or skillId == "ArrowShower" then
+	elseif className == "Archer" or className == "Hunter" or skillId == "DoubleStrafe" or skillId == "ArrowShower" or skillId == "BlitzBeat" or skillId == "FalconAssault" then
 		playCharacterActionAnimation(casterPlayer, "Bow")
-		local arrowCount = (skillId == "ArrowShower") and 5 or 2
+		local arrowCount = (skillId == "ArrowShower") and 5 or ((skillId == "FalconAssault" or skillId == "BlitzBeat") and 3 or 2)
 		for i = 1, arrowCount do
 			task.delay((i - 1) * 0.07, function()
 				local offset = (arrowCount > 2) and Vector3.new(math.random(-5, 5), 0, math.random(-5, 5)) or Vector3.zero
@@ -347,10 +347,10 @@ if PlayCombatVFX then
 				elColor = Color3.fromRGB(255, 220, 65) -- Critical golden slash!
 			end
 
-			if className == "Archer" then
+			if className == "Archer" or className == "Hunter" then
 				playCharacterActionAnimation(casterPlayer, "Bow")
 				spawnArrowProjectile(root.Position + Vector3.new(0, 1, 0), targetPos, elColor)
-			elseif className == "Mage" then
+			elseif className == "Mage" or className == "Wizard" or className == "Priest" or className == "Acolyte" then
 				playCharacterActionAnimation(casterPlayer, "Cast")
 				spawnArrowProjectile(root.Position + Vector3.new(0, 1.5, 0), targetPos, Color3.fromRGB(145, 195, 255))
 			else

@@ -110,54 +110,36 @@ if not Workspace:FindFirstChild("RoROK_TestGround") and not Workspace:FindFirstC
 
 end
 
+local SAFE_ZONES = {
+	{ minX = SAFE_MIN_X, maxX = SAFE_MAX_X, minZ = SAFE_MIN_Z, maxZ = SAFE_MAX_Z }, -- Prontera
+	{ minX = -24, maxX = 24, minZ = -642, maxZ = -608 },                            -- Culvert
+	{ minX = 905, maxX = 995, minZ = -48, maxZ = 24 },                             -- Morroc
+	{ minX = -995, maxX = -905, minZ = -48, maxZ = 24 },                           -- Amatsu
+}
+
+local function getSafeZone(position)
+	for _, zone in ipairs(SAFE_ZONES) do
+		if position.X > zone.minX and position.X < zone.maxX and position.Z > zone.minZ and position.Z < zone.maxZ then
+			return zone
+		end
+	end
+	return nil
+end
+
 local function inSafeZone(position)
-
-	if position.X > SAFE_MIN_X and position.X < SAFE_MAX_X and position.Z > SAFE_MIN_Z and position.Z < SAFE_MAX_Z then
-
-		return true
-
-	end
-
-	if position.X > -24 and position.X < 24 and position.Z > -642 and position.Z < -608 then
-
-		return true
-
-	end
-
-	if position.X > 905 and position.X < 995 and position.Z > -48 and position.Z < 24 then
-
-		return true
-
-	end
-
-	if position.X > -995 and position.X < -905 and position.Z > -48 and position.Z < 24 then
-
-		return true
-
-	end
-
-	return false
-
+	return getSafeZone(position) ~= nil
 end
 
 local function pushOutOfSafeZone(position)
-
-	if not inSafeZone(position) then return position end
-
-	local toMinX, toMaxX = position.X - SAFE_MIN_X, SAFE_MAX_X - position.X
-
-	local toMinZ, toMaxZ = position.Z - SAFE_MIN_Z, SAFE_MAX_Z - position.Z
-
+	local zone = getSafeZone(position)
+	if not zone then return position end
+	local toMinX, toMaxX = position.X - zone.minX, zone.maxX - position.X
+	local toMinZ, toMaxZ = position.Z - zone.minZ, zone.maxZ - position.Z
 	local nearest = math.min(toMinX, toMaxX, toMinZ, toMaxZ)
-
-	if nearest == toMaxX then return Vector3.new(SAFE_MAX_X, position.Y, position.Z) end
-
-	if nearest == toMinX then return Vector3.new(SAFE_MIN_X, position.Y, position.Z) end
-
-	if nearest == toMaxZ then return Vector3.new(position.X, position.Y, SAFE_MAX_Z) end
-
-	return Vector3.new(position.X, position.Y, SAFE_MIN_Z)
-
+	if nearest == toMaxX then return Vector3.new(zone.maxX, position.Y, position.Z) end
+	if nearest == toMinX then return Vector3.new(zone.minX, position.Y, position.Z) end
+	if nearest == toMaxZ then return Vector3.new(position.X, position.Y, zone.maxZ) end
+	return Vector3.new(position.X, position.Y, zone.minZ)
 end
 
 local function flatDistance(a, b)
@@ -207,6 +189,8 @@ local TEMPLATE_MAP = {
 	Spider        = "Wolf",
 
 	ThiefBug      = "Poring",
+
+	GoldenThiefBug= "Poring",
 
 	PoisonSnake   = "Poring",
 
@@ -444,6 +428,8 @@ local function makeMonster(id, position, mapName)
 	model:SetAttribute("IsBoss", def.IsBoss == true)
 
 	model:SetAttribute("IsWorldBoss", def.IsWorldBoss == true)
+
+	model:SetAttribute("IsMVP", def.IsWorldBoss == true or def.IsBoss == true or id == "GoldenThiefBug" or id == "Drake" or id == "Eddga" or id == "TurtleGeneral")
 
 	model.PrimaryPart = core
 
@@ -814,8 +800,6 @@ local spawnPoints = {
 	{ id = "Minorous", pos = Vector3.new(465, 0, -20), map = "Prontera" },
 
 	{ id = "Minorous", pos = Vector3.new(465, 0,  20), map = "Prontera" },
-
-	{ id = "Drake",    pos = Vector3.new(485, 2,   0), map = "Prontera" },
 
 }
 

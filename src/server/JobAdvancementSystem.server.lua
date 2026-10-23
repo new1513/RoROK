@@ -171,6 +171,20 @@ local function spawnJobMasterElena()
 	end)
 end
 
+-- คืนอุปกรณ์และระดับตีบวกเดิมกลับเข้ากระเป๋า ป้องกันของหายเมื่อสวมใส่อาวุธ 2nd Job
+local function returnEquipmentToInventory(data, itemId, refineLevel)
+	if not itemId then return end
+	data.Inventory = data.Inventory or {}
+	local refineNum = tonumber(refineLevel) or 0
+	for _, owned in ipairs(data.Inventory) do
+		if type(owned) == "table" and owned.itemId == itemId and (tonumber(owned.enhancement) or 0) == refineNum then
+			owned.quantity = (tonumber(owned.quantity) or 0) + 1
+			return
+		end
+	end
+	table.insert(data.Inventory, { itemId = itemId, quantity = 1, enhancement = refineNum })
+end
+
 -- ── 2. HANDLE JOB ADVANCE REQUEST ─────────────────────────────
 RE_RequestJobAdvance.OnServerEvent:Connect(function(player, requestedClass)
 	local data = DataStore.GetPlayerData(player)
@@ -182,40 +196,56 @@ RE_RequestJobAdvance.OnServerEvent:Connect(function(player, requestedClass)
 		return
 	end
 
-	-- Trigger Class Change in GameManager
-	local changeClassRemote = remotesFolder:FindFirstChild("ChangeClass")
-	if changeClassRemote then
-		-- Fire internally
-		data.Class = requestedClass
-		data.JobLevel = 1
-		data.JobXP = 0
-		data.StatPoints = (data.StatPoints or 0) + 15
-		data.SkillPoints = (data.SkillPoints or 0) + 1
+	-- Execute Class Change
+	data.Class = requestedClass
+	data.JobLevel = 1
+	data.JobXP = 0
+	data.StatPoints = (data.StatPoints or 0) + 15
+	data.SkillPoints = (data.SkillPoints or 0) + 1
 
-		local starterWeapon = ({
-			LordKnight = "HalberdOfValor",
-			Priest     = "HolyJudgementCross",
-			Wizard     = "ArchMageStaff",
-			Hunter     = "HunterGaleBow",
-			Assassin   = "KatarOfShadows",
-			Blacksmith = "WarhammerOfTitans",
-		})[requestedClass]
+	data.Equipment = data.Equipment or {}
+	data.EquipmentRefine = data.EquipmentRefine or {}
 
-		if starterWeapon then
-			data.Equipment.Weapon = starterWeapon
-			data.EquipmentRefine = data.EquipmentRefine or {}
-			data.EquipmentRefine.Weapon = 1 -- Granted with +1 refine!
+	local starterWeapon = ({
+		LordKnight = "HalberdOfValor",
+		Priest     = "HolyJudgementCross",
+		Wizard     = "ArchMageStaff",
+		Hunter     = "HunterGaleBow",
+		Assassin   = "KatarOfShadows",
+		Blacksmith = "WarhammerOfTitans",
+	})[requestedClass]
+
+	if starterWeapon then
+		local oldWeaponId = data.Equipment.Weapon
+		local oldRefine = tonumber(data.EquipmentRefine.Weapon) or 0
+		if oldWeaponId then
+			returnEquipmentToInventory(data, oldWeaponId, oldRefine)
 		end
 
-		DataStore.SyncAttributes(player, data)
-		if GameManager and GameManager.PushCharacterData then
-			GameManager.PushCharacterData(player)
-		end
-
-		local classThai = (ClassData.Classes[requestedClass] and ClassData.Classes[requestedClass].NameThai) or requestedClass
-		RE_SkillFeedback:FireAllClients(string.format("🌟 [เลื่อนขั้นอาชีพ] ขอแสดงความยินดีกับ %s ที่ได้บรรลุการเลื่อนขั้นสู่อาชีพระดับสูง %s!", player.Name, classThai))
-		RE_SkillFeedback:FireClient(player, string.format("🎉 ยินดีด้วย! คุณเลื่อนขั้นเป็น %s แล้ว พร้อมรับอาวุธระดับสูงและ +15 Stat Points!", classThai))
+		data.Equipment.Weapon = starterWeapon
+		data.EquipmentRefine.Weapon = 1 -- Granted with +1 refine!
 	end
+
+	DataStore.SyncAttributes(player, data)
+	if GameManager and GameManager.PushCharacterData then
+		GameManager.PushCharacterData(player)
+	end
+
+	-- Update inventory UI on client
+	local RE_UpdateInventory = remotesFolder:FindFirstChild("UpdateInventory")
+	if RE_UpdateInventory then
+		local weaponName = (ItemData[starterWeapon] and ItemData[starterWeapon].name) or starterWeapon or ""
+		RE_UpdateInventory:FireClient(player, data.Inventory or {}, data.Equipment or {}, "เลื่อนขั้นสำเร็จ! ได้รับ " .. weaponName .. " (+1)", data.EquipmentRefine or {}, data.EquipmentCards or {})
+	end
+
+	-- Rebuild weapon model on character
+	if _G.RebuildCharacterWeaponRig then
+		_G.RebuildCharacterWeaponRig(player)
+	end
+
+	local classThai = (ClassData.Classes[requestedClass] and ClassData.Classes[requestedClass].NameThai) or requestedClass
+	RE_SkillFeedback:FireAllClients(string.format("🌟 [เลื่อนขั้นอาชีพ] ขอแสดงความยินดีกับ %s ที่ได้บรรลุการเลื่อนขั้นสู่อาชีพระดับสูง %s!", player.Name, classThai))
+	RE_SkillFeedback:FireClient(player, string.format("🎉 ยินดีด้วย! คุณเลื่อนขั้นเป็น %s แล้ว พร้อมรับอาวุธระดับสูงและ +15 Stat Points!", classThai))
 end)
 
 spawnJobMasterElena()

@@ -1065,18 +1065,14 @@ function WindowSystem.init(player, playerGui, remotes, UITheme, minimapView, cal
 		currentInventorySnapshot = type(inventory) == "table" and inventory or {}
 		if type(equipment) == "table" then currentEquipment = equipment end
 		if type(equipmentRefine) == "table" then currentEquipmentRefine = equipmentRefine end
-		renderInventoryGrid()
-		task.spawn(refreshAvatarPreview)
+		if inventoryWin and inventoryWin.Visible then
+			renderInventoryGrid()
+			task.spawn(refreshAvatarPreview)
+		end
 	end
 
 	local function toggleInventory()
 		toggleWindow(inventoryWin)
-		if inventoryWin.Visible and requestInventoryRemote then
-			task.spawn(function()
-				local ok, inventory, equipment, equipmentRefine = pcall(function() return requestInventoryRemote:InvokeServer() end)
-				if ok then renderInventory(inventory, equipment, equipmentRefine) end
-			end)
-		end
 	end
 
 	inventoryWin:GetPropertyChangedSignal("Visible"):Connect(function()

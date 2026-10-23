@@ -281,8 +281,9 @@ task.spawn(function()
 			{ id = "ThiefBug", pos = Vector3.new( 14, 0, -672), map = "PronteraCulvert" },
 			{ id = "Sohee",    pos = Vector3.new(-16, 0, -708), map = "PronteraCulvert" },
 			{ id = "Sohee",    pos = Vector3.new( 16, 0, -722), map = "PronteraCulvert" },
-			{ id = "Minorous", pos = Vector3.new(  0, 0, -752), map = "PronteraCulvert" },
-			{ id = "Drake",    pos = Vector3.new(  0, 1, -792), map = "PronteraCulvert" },
+			{ id = "Minorous",       pos = Vector3.new(  0, 0, -752), map = "PronteraCulvert" },
+			{ id = "GoldenThiefBug", pos = Vector3.new(  0, 0, -772), map = "PronteraCulvert" },
+			{ id = "Drake",          pos = Vector3.new(  0, 1, -805), map = "PronteraCulvert" },
 
 			-- เมืองทะเลทราย Morroc (Lv.20–40 & World Boss Eddga)
 			{ id = "Scorpion", pos = Vector3.new(918, 0, -68),  map = "Morroc" },

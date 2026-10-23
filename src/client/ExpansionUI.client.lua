@@ -424,7 +424,7 @@ refreshSkillAndCardUI = function()
 		stTitle.Size = UDim2.new(1, -12, 0, 20)
 		stTitle.Position = UDim2.new(0, 8, 0, 4)
 		stTitle.BackgroundTransparency = 1
-		stTitle.Text = sInfo.label .. ": " .. (eqDef and eqDef.nameThai or "ไม่ได้สวมใส่")
+		stTitle.Text = sInfo.label .. ": " .. (eqDef and (eqDef.nameThai or eqDef.name) or "ไม่ได้สวมใส่")
 		stTitle.TextColor3 = Theme.TextWhite
 		stTitle.Font = Enum.Font.GothamBold
 		stTitle.TextSize = 12
@@ -436,7 +436,7 @@ refreshSkillAndCardUI = function()
 		cStatus.Position = UDim2.new(0, 8, 0, 26)
 		cStatus.BackgroundTransparency = 1
 		cStatus.TextWrapped = true
-		cStatus.Text = cardDef and ("🃏 " .. cardDef.nameThai .. "\n(" .. (cardDef.descThai or "") .. ")") or "✨ ช่องการ์ดว่าง (พร้อมเสียบการ์ด)"
+		cStatus.Text = cardDef and ("🃏 " .. (cardDef.nameThai or cardDef.name or "การ์ด") .. "\n(" .. (cardDef.descThai or cardDef.description or "") .. ")") or "✨ ช่องการ์ดว่าง (พร้อมเสียบการ์ด)"
 		cStatus.TextColor3 = cardDef and Theme.Emerald or Theme.TextMuted
 		cStatus.Font = Enum.Font.Gotham
 		cStatus.TextSize = 11
@@ -512,7 +512,7 @@ refreshSkillAndCardUI = function()
 			cDesc.Size = UDim2.new(0.68, 0, 0, 20)
 			cDesc.Position = UDim2.new(0, 10, 0, 26)
 			cDesc.BackgroundTransparency = 1
-			cDesc.Text = def.descThai or ""
+			cDesc.Text = def.descThai or def.description or ""
 			cDesc.TextColor3 = Theme.TextMuted
 			cDesc.Font = Enum.Font.Gotham
 			cDesc.TextSize = 11
@@ -1028,8 +1028,9 @@ local function refreshHandbookUI()
 
 			local dropNames = {}
 			for _, d in ipairs(mDef.Drops or {}) do
-				local it = ItemData.Items and ItemData.Items[d.ItemID]
-				table.insert(dropNames, (it and it.nameThai or d.ItemID))
+				local itId = d.itemId or d.ItemID
+				local it = ItemData.Items and ItemData.Items[itId] or ItemData[itId]
+				table.insert(dropNames, (it and (it.nameThai or it.name) or tostring(itId)))
 			end
 
 			local mStats = Instance.new("TextLabel")
@@ -1124,9 +1125,20 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	elseif input.KeyCode == Enum.KeyCode.M then
 		worldWindow.Visible = false
 	elseif input.KeyCode == Enum.KeyCode.B then
-		bookWindow.Visible = false
+		bookWindow.Visible = not bookWindow.Visible
+		if bookWindow.Visible then
+			refreshHandbookUI()
+		end
 	end
 end)
+
+_G.OpenCardSlottingUI = function()
+	skillWindow.Visible = true
+	switchSkillCardTab("Cards")
+	if refreshSkillAndCardUI then
+		refreshSkillAndCardUI()
+	end
+end
 
 _G.ToggleLegacySkillCardWindow = function()
 	skillWindow.Visible = not skillWindow.Visible

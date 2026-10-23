@@ -260,7 +260,11 @@ local function CalcDerivedStats(data)
 
 	local s = table.clone(data.Stats)
 
-	local equipmentBonuses = { ATK = 0, MATK = 0, DEF = 0, MDEF = 0, MaxHP = 0, MaxSP = 0 }
+	local equipmentBonuses = {
+		ATK = 0, MATK = 0, DEF = 0, MDEF = 0,
+		MaxHP = 0, MaxSP = 0, HP = 0, SP = 0,
+		CritRate = 0, Crit = 0, HIT = 0, FLEE = 0, ASPD = 0
+	}
 
 	for slot, itemId in pairs(data.Equipment or {}) do
 
@@ -276,9 +280,11 @@ local function CalcDerivedStats(data)
 
 		local refineLevel = math.clamp(math.floor(tonumber((data.EquipmentRefine or {})[slot]) or 0), 0, 15)
 
-		if slot == "Weapon" then equipmentBonuses.ATK += refineLevel
-
-		elseif slot == "Armor" then equipmentBonuses.DEF += refineLevel end
+		if slot == "Weapon" then
+			equipmentBonuses.ATK += (refineLevel * 6)
+		elseif slot == "Armor" or slot == "Shield" or slot == "Footgear" or slot == "Robe" or slot == "HeadTop" then
+			equipmentBonuses.DEF += (refineLevel * 4)
+		end
 
 
 
@@ -1306,6 +1312,7 @@ _G.DataStore = {
 	SetSP            = SetSP,
 
 	ModifyGold       = ModifyGold,
+	AddGold          = ModifyGold,
 
 	AddItem          = AddItem,
 	RemoveItem       = RemoveItem,

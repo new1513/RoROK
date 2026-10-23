@@ -1,0 +1,350 @@
+# รายงานสรุปผลการแก้ไขโค้ดและปรับปรุงระบบ (RoROK Refactoring & Bugfix Report)
+
+**ชื่อเอกสาร**: `ReportCode_antigravity.md`  
+**วันที่ดำเนินการ**: 2026-10-24  
+**ผู้ดำเนินการ**: Antigravity AI Assistant  
+**เป้าหมาย**: แก้ไขปัญหาจุดวิกฤต (Critical Crashes), บั๊กสูตรคำนวณสเตตัส/ดาเมจ, บั๊กของหาย, จุดซ้ำซ้อนข้ามสคริปต์ (Redundancies), และปัญหาประสิทธิภาพ (Performance) ครบทั้ง **10 ข้อหลัก** จากตารางสรุปของ `reportcode_gemini.md` 100%
+
+---
+
+## สรุปภาพรวมการแก้ไขทั้ง 10 ข้อ
+
+| ข้อที่ | หัวข้อปัญหา | ไฟล์ที่ได้รับการแก้ไข | ระดับความสำคัญ | สถานะ |
+| :---: | :--- | :--- | :---: | :---: |
+| **1** | ฟังก์ชันไม่มีอยู่จริง (`DataStore.AddGold`) | `DataStore.server.lua`, `PvPArenaSystem.server.lua`, `DungeonAndMvpSystem.server.lua` | วิกฤต (Crash) | ✅ แก้ไขแล้ว 100% |
+| **2** | เรียก `FireServer()` จากฝั่ง Server | `PvPArenaSystem.server.lua` | วิกฤต (Crash) | ✅ แก้ไขแล้ว 100% |
+| **3** | ต่อ String กับค่า `nil` (`nameThai`/`descThai`) | `ExpansionUI.client.lua` | วิกฤต (Crash) | ✅ แก้ไขแล้ว 100% |
+| **4** | โบนัสเลือด, SP, การ์ด, FLEE, HIT, ตีบวกไม่คิด | `DataStore.server.lua`, `ClassData.lua` | บั๊กคำนวณสเตตัส | ✅ แก้ไขแล้ว 100% |
+| **5** | คลาส Hunter คิด ATK จาก STR แทน DEX | `ClassData.lua`, `CombatVFX.client.lua` | บั๊กคลาสขั้นที่ 2 | ✅ แก้ไขแล้ว 100% |
+| **6** | ค่าตีบวก (`refineATK`) ไม่ถูกส่งเข้าสูตรดาเมจ | `CombatSystem.server.lua` | บั๊กระบบตีบวก | ✅ แก้ไขแล้ว 100% |
+| **7** | เลื่อนขั้น 2nd Job เขียนทับอาวุธเดิมหายถาวร | `JobAdvancementSystem.server.lua` | บั๊กไอเทมสูญหาย | ✅ แก้ไขแล้ว 100% |
+| **8** | เสกบอส MVP ซ้ำซ้อน 3 สคริปต์ & บอสไม่มี AI | `MonsterAI.server.lua`, `WorldMapExpansion.server.lua`, `DungeonAndMvpSystem.server.lua`, `CombatSystem.server.lua` | จุดซ้ำซ้อนสูง | ✅ แก้ไขแล้ว 100% |
+| **9** | หน้าต่าง UI ทับซ้อน / Dead UI | `WindowSystem.lua`, `ExpansionUI.client.lua`, `RagnarokPanels.client.lua`, `UIManager.client.lua` | จุดซ้ำซ้อนสูง | ✅ แก้ไขแล้ว 100% |
+| **10** | ยิงข้อมูลตัวละครทุก 1 วินาทีแม้เลือดเต็ม | `GameManager.server.lua`, `UIManager.client.lua`, `WindowSystem.lua` | Performance | ✅ แก้ไขแล้ว 100% |
+
+---
+
+## รายละเอียดเชิงลึกรายข้อ (ไฟล์, จุดที่แก้, สาเหตุ, และโค้ดก่อน/หลังแก้)
+
+---
+
+### ข้อที่ 1: ปัญหาเรียกฟังก์ชันที่ไม่มีอยู่จริง (`DataStore.AddGold`)
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/DataStore.server.lua`
+  * `src/server/PvPArenaSystem.server.lua`
+  * `src/server/DungeonAndMvpSystem.server.lua`
+* **สาเหตุ**:
+  * ในโมดูล `DataStore.server.lua` มีเพียงฟังก์ชัน `ModifyGold(player, amount)` แต่ใน `PvPArenaSystem` และ `DungeonAndMvpSystem` เรียก `DataStore.AddGold(player, amount)` ส่งผลให้เกมเกิด Runtime Error (attempt to call a nil value) ทันทีที่ผู้เล่นเปิดหีบสมบัติ MVP หรือได้รับรางวัลจากสนาม PvP
+  * ใน `DungeonAndMvpSystem` ใช้ `table.insert(pData.Inventory, ...)` ยัดไอเทมตรงๆ ทำให้ไอเทมหินตีบวกไม่ยอมรวมกอง (Stack)
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. ใน `DataStore.server.lua` เพิ่ม Alias `AddGold = ModifyGold` ในตาราง `_G.DataStore`
+  2. ใน `PvPArenaSystem.server.lua` และ `DungeonAndMvpSystem.server.lua` ปรับให้เรียกแบบ Safe Call และใช้ `DataStore.AddItem`
+```lua
+-- [ก่อนแก้]:
+DataStore.AddGold(player, goldBonus)
+table.insert(pData.Inventory, { itemId = "BeginnerRefinementStone", quantity = 3 })
+
+-- [หลังแก้]:
+if DataStore then
+    (DataStore.ModifyGold or DataStore.AddGold)(player, goldBonus)
+    DataStore.AddItem(player, "BeginnerRefinementStone", 3)
+end
+```
+
+---
+
+### ข้อที่ 2: ปัญหาเรียก `FireServer()` จากฝั่ง Server ใน `PvPArenaSystem.server.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/PvPArenaSystem.server.lua`
+* **สาเหตุ**:
+  * บนเซิร์ฟเวอร์ โค้ดส่วน ProximityPrompt ประตูทางออกลานประลอง (`portalPrompt.Triggered`) มีการเรียก `RE_LeavePvPArena:FireServer()` ซึ่งผิดกฎของ Roblox Engine เพราะฟังก์ชัน `FireServer()` สามารถเรียกได้จาก LocalScript ฝั่ง Client เท่านั้น การเรียกบน Script จะทำให้เกิด Exception ทันที
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ประกาศตัวแปร `local leaveArena` แบบ Forward Declaration แล้วให้ `portalPrompt.Triggered` เรียกฟังก์ชัน `leaveArena(player)` บนเซิร์ฟเวอร์โดยตรง
+```lua
+-- [ก่อนแก้]:
+portalPrompt.Triggered:Connect(function(player)
+    RE_LeavePvPArena:FireServer() -- ❌ Error: FireServer can only be called from a LocalScript
+end)
+
+-- [หลังแก้]:
+local leaveArena -- Forward declaration
+...
+portalPrompt.Triggered:Connect(function(player)
+    if leaveArena then
+        leaveArena(player) -- ✅ ทำงานบน Server ได้ทันทีและวาร์ปผู้เล่นกลับ Prontera
+    end
+end)
+```
+
+---
+
+### ข้อที่ 3: ปัญหาต่อ String กับค่า `nil` (`nameThai`/`descThai`) ใน `ExpansionUI.client.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/client/ExpansionUI.client.lua`
+* **สาเหตุ**:
+  * โค้ดส่วนหน้าต่างเสียบการ์ดอุปกรณ์และสมุดคู่มือนักผจญภัย ดึงค่า `eqDef.nameThai` และ `cardDef.nameThai` มาต่อข้อความตรงๆ แต่ไอเทมใน `ItemData.lua` มีเฉพาะคีย์ภาษาอังกฤษ `name` และ `description` เมื่อมีค่าการ์ดที่ไม่มี `nameThai` จึงเกิด Error `attempt to concatenate a nil value` ทำให้หน้าต่าง UI ค้างและเปิดไม่ขึ้น
+  * ในสมุดคู่มืออ่าน `d.ItemID` แต่ drop table บางตัวใช้ `d.itemId`
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * เพิ่ม Fallback ป้องกันค่า nil: `(eqDef.nameThai or eqDef.name)` และ `(cardDef.descThai or cardDef.description or "")`
+  * รองรับทั้ง `d.itemId or d.ItemID`
+```lua
+-- [ก่อนแก้]:
+stTitle.Text = sInfo.label .. ": " .. (eqDef and eqDef.nameThai or "ไม่ได้สวมใส่")
+cStatus.Text = cardDef and ("🃏 " .. cardDef.nameThai .. "\n(" .. (cardDef.descThai or "") .. ")")
+
+-- [หลังแก้]:
+stTitle.Text = sInfo.label .. ": " .. (eqDef and (eqDef.nameThai or eqDef.name) or "ไม่ได้สวมใส่")
+cStatus.Text = cardDef and ("🃏 " .. (cardDef.nameThai or cardDef.name or "การ์ด") .. "\n(" .. (cardDef.descThai or cardDef.description or "") .. ")") or "✨ ช่องการ์ดว่าง (พร้อมเสียบการ์ด)"
+```
+
+---
+
+### ข้อที่ 4: บั๊กการคำนวณสเตตัสและโบนัสอุปกรณ์/การ์ด/ตีบวก
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/DataStore.server.lua`
+  * `src/shared/ClassData.lua`
+* **สาเหตุ**:
+  * ใน `DataStore.server.lua` ฟังก์ชัน `GetEquipmentBonuses` ตรวจสอบเฉพาะค่า ATK, DEF, MDEF, MATK แต่ไม่ได้นำโบนัส `MaxHP/HP`, `MaxSP/SP`, `CritRate`, `HIT`, `FLEE`, `ASPD` จากอุปกรณ์และการ์ดมารวม
+  * โบนัสตีบวกอาวุธให้ ATK เพียง +1 ต่อระดับ แทนที่จะเป็น +6 ATK ต่อระดับตามสูตร RO และเกราะไม่ได้บวก DEF +4 ต่อระดับ
+  * ใน `ClassData.lua` ฟังก์ชัน `CalculateDerivedStats` แก้ไขตารางของผู้เรียกโดยตรง (`eq.HP = eq.HP or 0`) และอ่านคีย์ `eq.HP` ซึ่งไม่ตรงกับที่ DataStore ส่ง `MaxHP` มา
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ใน `DataStore.server.lua`: คำนวณสะสมโบนัสสเตตัสครบทุกค่า พร้อมสูตรตีบวกอาวุธ (+6 ATK) และเกราะ (+4 DEF)
+  * ใน `ClassData.lua`: ปรับเป็น Pure Function ไม่อ่านเขียนทับตารางเดิม และดึงค่าแบบยืดหยุ่น:
+```lua
+-- [หลังแก้ใน ClassData.lua]:
+local eqHP = tonumber(eq.MaxHP or eq.HP) or 0
+local eqSP = tonumber(eq.MaxSP or eq.SP) or 0
+local eqCritRate = tonumber(eq.CritRate or eq.Crit) or 0
+local eqHIT = tonumber(eq.HIT or eq.Hit) or 0
+local eqFLEE = tonumber(eq.FLEE or eq.Flee) or 0
+local eqASPD = tonumber(eq.ASPD or eq.Aspd) or 0
+
+local MaxHP = base.BaseHP + (VIT * 35) + (level * 30) + eqHP
+local MaxSP = base.BaseSP + (INT * 15) + (level * 10) + eqSP
+local HIT = DEX + level + 20 + eqHIT
+local FLEE = AGI + level + 10 + eqFLEE
+local ASPD = math.min(base.BaseASPD + math.floor(AGI * 4) + eqASPD, 190)
+local CritRate = math.floor(LUK / 3) + 1 + eqCritRate
+```
+
+---
+
+### ข้อที่ 5: คลาส Hunter คำนวณ ATK สเกลจาก STR แทน DEX และแอนิเมชันไม่ตรง
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/shared/ClassData.lua`
+  * `src/client/CombatVFX.client.lua`
+* **สาเหตุ**:
+  * ใน `ClassData.lua` มีโค้ด `classID == "Archer"` เช็คเฉพาะ Archer เมื่อผู้เล่นเลื่อนขั้นเป็น `Hunter` ตัวแปร `isBowClass` กลายเป็น `false` ส่งผลให้พลังโจมตี ATK เปลี่ยนกลับไปสเกลจาก STR แทน DEX
+  * ใน `CombatVFX.client.lua` ตรวจสอบเฉพาะคลาส Archer สำหรับแอนิเมชันยิงธนูและลูกศรพุ่ง ทำให้ Hunter ฟันเป็นดาบประชิด และคลาส Wizard / Priest ไม่มีแอนิเมชันร่ายเวท
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ใน `ClassData.lua`: ปรับเป็น `local isBowClass = (classID == "Archer" or classID == "Hunter")` ทั้งสำหรับค่า Stat หลักและ Stat รอง
+  * ใน `CombatVFX.client.lua`: เพิ่มการรองรับ `Hunter` สำหรับการยิงธนูและสกิล BlitzBeat/FalconAssault และเพิ่ม `Wizard/Priest` สำหรับท่ายกมือร่ายมนตร์
+```lua
+-- [หลังแก้ใน ClassData.lua]:
+local isBowClass = (classID == "Archer" or classID == "Hunter")
+local mainPhysicalStat = isBowClass and DEX or STR
+local secondaryStat = isBowClass and math.floor(STR / 5) or math.floor(DEX / 5)
+```
+
+---
+
+### ข้อที่ 6: ค่าตีบวกอาวุธ (`refineATK`) ไม่ถูกส่งเข้าสูตรคำนวณความเสียหาย
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/CombatSystem.server.lua`
+* **สาเหตุ**:
+  * ใน `CombatSystem.server.lua` ฟังก์ชัน `PlayerAttackMonster` มีการเรียก `CalcPhysicalDamage` และ `CalcMagicDamage` โดยใส่พารามิเตอร์ท้ายเป็น `0, 0` ตายตัว ทำให้การตีบวกอาวุธ (+1 ถึง +15) ที่ผู้เล่นลงทุนตีบวกมา ไม่มีผลต่อการเพิ่มดาเมจจริงในระบบต่อสู้
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ดึงค่าระดับตีบวก `pData.EquipmentRefine.Weapon` มาคำนวณ `refineATK = weaponRefineLevel * 6` (และ `refineMATK`)
+  * ดึงค่า `ignoreDefPercent` จากสกิล และบัฟ `BuffAuraBlade` (+25%) ส่งเข้าฟังก์ชันคำนวณดาเมจ
+```lua
+-- [หลังแก้ใน CombatSystem.server.lua]:
+local weaponRefineLevel = math.clamp(math.floor(tonumber(pData and pData.EquipmentRefine and pData.EquipmentRefine.Weapon) or 0), 0, 15)
+local refineATK = weaponRefineLevel * 6
+local refineMATK = isMagicSkill and (weaponRefineLevel * 6) or 0
+local ignoreDefPercent = (skillDataRef and (skillDataRef.ignoreDefPercent or skillDataRef.ignoreDef)) or 0
+if player:GetAttribute("BuffAuraBlade") then
+    ignoreDefPercent = math.max(ignoreDefPercent, 0.25)
+end
+
+if isMagicSkill then
+    finalDamage = CalcMagicDamage(..., ignoreDefPercent, refineMATK)
+else
+    finalDamage = CalcPhysicalDamage(..., ignoreDefPercent, refineATK)
+end
+```
+
+---
+
+### ข้อที่ 7: เลื่อนขั้น 2nd Job เขียนทับอาวุธเดิมโดยไม่คืนเข้ากระเป๋า (บั๊กของหาย)
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/JobAdvancementSystem.server.lua`
+* **สาเหตุ**:
+  * เมื่อคุยกับ Grand Master Elena เพื่อเลื่อนขั้นเป็นคลาส 2 ระบบจะมอบอาวุธเริ่มต้นประจำคลาส 2 (เช่น `HalberdOfValor`, `ArchMageStaff`) โดยกำหนด `data.Equipment.Weapon = starterWeapon` ทับลงไปทันที ทำให้อาวุธชิ้นเดิมของผู้เล่นพร้อมระดับตีบวกหายไปจากตัวละครถาวร
+  * มีเงื่อนไข `if changeClassRemote then` ที่ค้างไว้โดยไม่ได้ใช้งาน และไม่ได้เรียกฟังก์ชันเปลี่ยนโมเดลอาวุธในมือ
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * เพิ่มฟังก์ชัน `returnEquipmentToInventory` คืนอาวุธเดิมและค่าตีบวกเดิมเข้ากระเป๋า `data.Inventory` ก่อนติดตั้งอาวุธใหม่
+  * ยิง `RE_UpdateInventory` อัปเดตกระเป๋าฝั่ง Client และเรียก `_G.RebuildCharacterWeaponRig(player)` เพื่อเปลี่ยนโมเดลอาวุธ 3D ในมือตัวละครทันที
+```lua
+-- [หลังแก้ใน JobAdvancementSystem.server.lua]:
+local function returnEquipmentToInventory(data, itemId, refineLevel)
+    if not itemId then return end
+    data.Inventory = data.Inventory or {}
+    local refineNum = tonumber(refineLevel) or 0
+    for _, owned in ipairs(data.Inventory) do
+        if type(owned) == "table" and owned.itemId == itemId and (tonumber(owned.enhancement) or 0) == refineNum then
+            owned.quantity = (tonumber(owned.quantity) or 0) + 1
+            return
+        end
+    end
+    table.insert(data.Inventory, { itemId = itemId, quantity = 1, enhancement = refineNum })
+end
+
+if starterWeapon then
+    local oldWeaponId = data.Equipment.Weapon
+    local oldRefine = tonumber(data.EquipmentRefine.Weapon) or 0
+    if oldWeaponId then
+        returnEquipmentToInventory(data, oldWeaponId, oldRefine) -- ✅ คืนของเดิมเข้ากระเป๋า
+    end
+    data.Equipment.Weapon = starterWeapon
+    data.EquipmentRefine.Weapon = 1
+end
+
+if _G.RebuildCharacterWeaponRig then
+    _G.RebuildCharacterWeaponRig(player) -- ✅ อัปเดตโมเดลอาวุธในมือทันที
+end
+```
+
+---
+
+### ข้อที่ 8: จุดซ้ำซ้อนการเสกบอส MVP ข้าม 3 สคริปต์ และบอสไม่มี AI
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/MonsterAI.server.lua`
+  * `src/server/WorldMapExpansion.server.lua`
+  * `src/server/DungeonAndMvpSystem.server.lua`
+  * `src/server/CombatSystem.server.lua`
+* **สาเหตุ**:
+  * `DungeonAndMvpSystem.server.lua` มีลูปเสกบอส `GoldenThiefBug`, `Drake`, `Eddga` ซ้อนขึ้นมาเป็นก้อน Part สี Neon ในโฟลเดอร์ `Workspace.RoROK_MVPBosses` โดยไม่มี AI เคลื่อนที่หรือโจมตี และระบบล็อกเป้าหมายไม่เห็น
+  * `MonsterAI.server.lua` ในโซน 6 นอกเมือง Prontera มีการเสก `Drake` ซ้ำซ้อนกับในดันเจี้ยน Culvert
+  * ฟังก์ชัน `pushOutOfSafeZone` ใน `MonsterAI.server.lua` ตรวจสอบขอบเขตเฉพาะเมือง Prontera ทำให้มอนสเตอร์ที่เดินเฉียดโซนปลอดภัยใน Morroc/Amatsu ถูกผลักวาร์ปกลับมาที่ Prontera
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. ลบการเสกบอส Neon ปลอมใน `DungeonAndMvpSystem.server.lua` ออก แล้วส่งออกฟังก์ชัน `_G.SpawnMvpTreasureChest = spawnTreasureChest`
+  2. รวมศูนย์การเสกบอสทั้งหมดผ่าน `_G.MonsterAI.SpawnMonster` ใน `Workspace.Monsters` โดยเสก `GoldenThiefBug` และ `Drake` ไว้ท้ายดันเจี้ยน `PronteraCulvert`, `Eddga` ใน `Morroc`, และ `TurtleGeneral` ใน `Amatsu`
+  3. ลบ `Drake` ซ้ำซ้อนออกจากทุ่ง Prontera Zone 6
+  4. ปรับ `pushOutOfSafeZone` ให้คำนวณตามพิกัดกรอบโซนปลอดภัยของแต่ละแมพแยกอิสระ
+  5. ใน `CombatSystem.server.lua` เมื่อบอส MVP ถูกกำจัด จะประกาศ `🏆 [MVP DEFEATED]` ทั้งเซิร์ฟเวอร์ และเรียก `_G.SpawnMvpTreasureChest` ดรอปหีบสมบัติ MVP ทันที
+```lua
+-- [หลังแก้ใน CombatSystem.server.lua]:
+local isMvpBoss = monster:GetAttribute("IsWorldBoss") == true or monster:GetAttribute("IsMVP") == true or (monsterID == "GoldenThiefBug" or monsterID == "Drake" or monsterID == "Eddga" or monsterID == "TurtleGeneral")
+if isMvpBoss then
+    local mDef = _G.MonsterData and _G.MonsterData[monsterID]
+    local bossName = (mDef and mDef.Name) or monsterID
+    local killerName = killerPlayer and killerPlayer.Name or "เหล่านักผจญภัย"
+    local killerClass = killerPlayer and (killerPlayer:GetAttribute("Class") or "Adventurer") or "Adventurer"
+    if RE_SkillFeedback then
+        RE_SkillFeedback:FireAllClients(string.format("🏆 [MVP DEFEATED] บอส %s ถูกปราบแล้วโดย %s (%s)!", bossName, killerName, killerClass))
+    end
+    if _G.SpawnMvpTreasureChest then
+        _G.SpawnMvpTreasureChest(monsterPos, monsterID, killerPlayer)
+    end
+end
+```
+
+---
+
+### ข้อที่ 9: จุดซ้ำซ้อนหน้าต่าง UI ทับซ้อน และ Dead UI
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/client/RagnarokPanels.client.lua`
+  * `src/client/ExpansionUI.client.lua`
+  * `src/client/UIManager.client.lua`
+  * `src/client/UI/WindowSystem.lua`
+* **สาเหตุ**:
+  * หน้าต่าง `Stats`, `Skills`, `TutorialOverlay` เดิมใน `WindowSystem.lua` ถูกแทนที่ด้วย `RagnarokPanels` และ `HelpWindow` ไปแล้ว แต่ `UIManager` ยังคงเรียก `windowSystem.renderStats(data)` ทุกวินาที
+  * ใน `WindowSystem.lua` ฟังก์ชัน `renderInventory` สั่งลบและวาด Grid ช่องกระเป๋าใหม่ทั้งหมด พร้อม Clone โมเดลตัวละคร 3D ใน `ViewportFrame` ทุกครั้งที่ข้อมูลอัปเดต แม้หน้าต่างกระเป๋าจะปิดอยู่
+  * ใน `ExpansionUI.client.lua` ปุ่มคีย์บอร์ด `B` (สมุดคู่มือนักผจญภัย) สั่งปิด `Visible = false` แทนที่จะเป็นการสลับเปิด/ปิด และไม่มีฟังก์ชันเปิดหน้าต่างเสียบการ์ด
+  * ใน `RagnarokPanels.client.lua` บล็อกไม่ให้ลากสกิลกลุ่ม `isDebuff` (`LexAeterna`, `Quagmire`) วางลง Hotbar และปุ่มแนะนำสเตตัสตกหล่นอาชีพคลาส 2
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. `RagnarokPanels.client.lua`: เพิ่มอาชีพคลาส 2 ครบทุกสายใน `recommendBtn`, ปลดล็อกให้วางสกิล `isDebuff` บน Hotbar ได้, และลบโค้ดบล็อกที่ซ้ำซ้อน
+  2. `ExpansionUI.client.lua`: แก้ไขปุ่ม `B` ให้เปิด/ปิดสมุดคู่มือนักผจญภัย & เรดาร์ MVP พร้อมรีเฟรชข้อมูลมอนสเตอร์ และเพิ่ม `_G.OpenCardSlottingUI` เพื่อเปิดหน้าต่างการ์ดเมื่อคลิกการ์ดในกระเป๋า
+  3. `WindowSystem.lua`: ใน `renderInventory` เพิ่มการตรวจเช็ค `if inventoryWin and inventoryWin.Visible then` เพื่อไม่ให้วาดตารางและโคลนโมเดล 3D ขณะปิดกระเป๋า และลบการเรียก `InvokeServer()` ซ้ำซ้อน 2 ครั้งตอนกดเปิดกระเป๋า
+  4. `UIManager.client.lua`: ลบการเรียก `windowSystem.renderStats(data)` ออก แล้วส่งผ่าน `_G.UpdateRagnarokData` ไปยัง RagnarokPanels แทน
+
+---
+
+### ข้อที่ 10: ปัญหา Performance — การส่งข้อมูลตัวละครทั้งก้อนทุก 1 วินาทีใน Regen Loop
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/GameManager.server.lua`
+* **สาเหตุ**:
+  * ใน `GameManager.server.lua` ฟังก์ชัน `StartRegenLoop` วนลูปทุก 1 วินาที และเรียก `DataStore.SyncAttributes(player, data)` พร้อมกับ `PushCharacterData(player)` ตลอดเวลา แม้ว่าค่า HP และ SP ของตัวละครจะเต็ม 100% อยู่แล้ว ส่งผลให้เซิร์ฟเวอร์ส่งข้อมูลขนาดใหญ่ข้ามเครือข่ายตลอดเวลาอย่างไร้ประโยชน์
+  * ฟังก์ชัน `BindCharacterRespawn(player)` เรียกตัวเองซ้ำซ้อนในอีเวนต์ `CharacterAdded` และไม่ได้ถูกผูกใน `SetupPlayer`
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ใน `StartRegenLoop`: เพิ่มตัวแปร `local changed = false` และจะกำหนดเป็น `true` เมื่อมีการฟื้นฟูเลือดหรือ SP จริงเท่านั้น หากไม่มีค่าใดเปลี่ยน จะไม่เรียก `SyncAttributes` และ `PushCharacterData`
+  * ใน `BindCharacterRespawn`: ลบการเรียกตัวเองซ้ำใน `CharacterAdded` ออก และนำ `BindCharacterRespawn(player)` ไปผูกใน `SetupPlayer(player)` อย่างเป็นระบบ
+```lua
+-- [หลังแก้ใน GameManager.server.lua]:
+local function StartRegenLoop(player)
+    ...
+    local thread = task.spawn(function()
+        local hpRegenElapsed = 0
+        local spRegenAccumulator = 0
+        while player.Parent ~= nil do
+            task.wait(1)
+            hpRegenElapsed += 1
+            local data = DataStore.GetPlayerData(player)
+            if not data then break end
+            local derived = DataStore.CalcDerivedStats(data)
+            local changed = false
+
+            if hpRegenElapsed >= 10 and data.HP < derived.MaxHP then
+                local newHP = math.min(data.HP + derived.HPRegen, derived.MaxHP)
+                DataStore.SetHP(player, newHP)
+                changed = true
+            end
+            if hpRegenElapsed >= 10 then hpRegenElapsed = 0 end
+
+            if data.SP < derived.MaxSP then
+                spRegenAccumulator += derived.SPRegen
+                local wholeSP = math.floor(spRegenAccumulator)
+                if wholeSP > 0 then
+                    local newSP = math.min(data.SP + wholeSP, derived.MaxSP)
+                    local restoredSP = newSP - data.SP
+                    DataStore.SetSP(player, newSP)
+                    spRegenAccumulator -= restoredSP
+                    if newSP >= derived.MaxSP then spRegenAccumulator = 0 end
+                    changed = true
+                end
+            else
+                spRegenAccumulator = 0
+            end
+
+            -- ✅ ซิงค์และส่งข้อมูลตัวละครเฉพาะเมื่อมีค่าเปลี่ยนแปลงจริงเท่านั้น
+            if changed then
+                DataStore.SyncAttributes(player, data)
+                PushCharacterData(player)
+            end
+        end
+    end)
+end
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (15 ไฟล์)
+
+1. `d:\Robox\project01\src\shared\ClassData.lua`
+2. `d:\Robox\project01\src\server\DataStore.server.lua`
+3. `d:\Robox\project01\src\server\GameManager.server.lua`
+4. `d:\Robox\project01\src\server\CombatSystem.server.lua`
+5. `d:\Robox\project01\src\server\MonsterAI.server.lua`
+6. `d:\Robox\project01\src\server\JobAdvancementSystem.server.lua`
+7. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
+8. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
+9. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
+10. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+11. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+12. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+13. `d:\Robox\project01\src\client\UIManager.client.lua`
+14. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+15. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+
+---
+*จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*

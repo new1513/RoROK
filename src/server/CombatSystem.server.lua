@@ -1113,6 +1113,22 @@ KillMonster = function(monster, killerPlayer, partyMembers)
 
 	Remotes.MonsterDied:FireAllClients(monster.Name, monsterPos)
 
+	-- MVP Boss Defeat Announcement & Treasure Chest
+	local isMvpBoss = monster:GetAttribute("IsWorldBoss") == true or monster:GetAttribute("IsMVP") == true or (monsterID == "GoldenThiefBug" or monsterID == "Drake" or monsterID == "Eddga" or monsterID == "TurtleGeneral")
+	if isMvpBoss then
+		local mDef = _G.MonsterData and _G.MonsterData[monsterID]
+		local bossName = (mDef and mDef.Name) or monsterID
+		local killerName = killerPlayer and killerPlayer.Name or "เหล่านักผจญภัย"
+		local killerClass = killerPlayer and (killerPlayer:GetAttribute("Class") or "Adventurer") or "Adventurer"
+		local RE_SkillFeedback = Remotes.SkillFeedback or (ReplicatedStorage:FindFirstChild("RemoteEvents") and ReplicatedStorage.RemoteEvents:FindFirstChild("SkillFeedback"))
+		if RE_SkillFeedback then
+			RE_SkillFeedback:FireAllClients(string.format("🏆 [MVP DEFEATED] บอส %s ถูกปราบแล้วโดย %s (%s)!", bossName, killerName, killerClass))
+		end
+		if _G.SpawnMvpTreasureChest then
+			_G.SpawnMvpTreasureChest(monsterPos, monsterID, killerPlayer)
+		end
+	end
+
 	-- ── Schedule Respawn ────────────────────────────────────
 
 	-- เก็บข้อมูลก่อนทำลาย model
@@ -1317,6 +1333,15 @@ local function PlayerAttackMonster(player, monster, skillId)
 	end
 
 	-- ── Critical Roll ────────────────────────────────────
+	-- ── Refine ATK / MATK & Ignore DEF ───────────────────
+	local weaponRefineLevel = math.clamp(math.floor(tonumber(pData and pData.EquipmentRefine and pData.EquipmentRefine.Weapon) or 0), 0, 15)
+	local refineATK = weaponRefineLevel * 6
+	local refineMATK = isMagicSkill and (weaponRefineLevel * 6) or 0
+	local ignoreDefPercent = (skillDataRef and (skillDataRef.ignoreDefPercent or skillDataRef.ignoreDef)) or 0
+	if player:GetAttribute("BuffAuraBlade") then
+		ignoreDefPercent = math.max(ignoreDefPercent, 0.25)
+	end
+
 	local isCrit = (not isMagicSkill) and RollCritical(attackerCrit)
 
 	-- ── Calculate Damage ─────────────────────────────────
@@ -1327,7 +1352,7 @@ local function PlayerAttackMonster(player, monster, skillId)
 			targetMDEF,
 			skillElement, targetElement,
 			skillPowerMult,
-			0, 0
+			ignoreDefPercent, refineMATK
 		)
 	else
 		finalDamage = CalcPhysicalDamage(
@@ -1335,7 +1360,7 @@ local function PlayerAttackMonster(player, monster, skillId)
 			isCrit,
 			attackElement, targetElement,
 			weaponType, targetSize,
-			0, 0
+			ignoreDefPercent, refineATK
 		)
 		finalDamage = math.floor(finalDamage * skillPowerMult)
 	end
