@@ -760,19 +760,9 @@ for sId, sLv in pairs(owned) do
 
 ### 5.5 `src/client/UI/MinimapView.lua`
 
-* **จุดที่ 1 (บรรทัด 476–487 และ 544)**:
-  1. วาดบล็อกอาคารเมือง Prontera (`PRONTERA_CITY_BLOCKS`) ลงบนมินิแมพตลอดเวลา แม้ว่าผู้เล่นจะวาร์ปไปอยู่แมพ `Morroc`, `Amatsu`, หรือ `PronteraCulvert` แล้วก็ตาม
-  2. บรรทัด 544 เช็คชื่อบอส `mId == "Turtle_General"` (มีขีดล่าง `_`) แต่ใน `MonsterData.lua` ใช้ชื่อ `"TurtleGeneral"` (ไม่มีขีดล่าง)
-
-```lua
--- [บรรทัด 476-487]
-for idx, block in ipairs(PRONTERA_CITY_BLOCKS) do -- ❌ [จุดที่เขียนไม่ดี]: แสดงผังตึกเมือง Prontera ตลอดเวลาแม้ผู้เล่นจะอยู่ในดันเจี้ยนหรือแมพอื่น
-	local f = cityBlockFrames[idx]
-	...
--- [บรรทัด 544]
-local isWorldBoss = obj:GetAttribute("IsWorldBoss") or mId == "Eddga" or mId == "Turtle_General" -- ❌ [จุดที่เขียนไม่ดี]: พิมพ์ชื่อไอดีผิดเป็น "Turtle_General" (ที่ถูกคือ "TurtleGeneral")
--- ✅ [วิธีแก้]: ซ่อน buildingLayer เมื่อ player:GetAttribute("Map") ~= "Prontera" และแก้ "Turtle_General" เป็น "TurtleGeneral"
-```
+* **จุดที่ 1 (บรรทัด 476–487 และ 544)** [✅ แก้ไขแล้ว]:
+  1. เพิ่มเงื่อนไข `local isProntera = (currentMap == "Prontera")` และซ่อน `f.Visible = isProntera` เมื่อผู้เล่นไม่ได้อยู่ในแมพ Prontera ทำให้ผังอาคารเมืองไม่ปรากฏค้างบนมินิแมพในแมพอื่น
+  2. แก้ไขคำผิดของบอสจาก `"Turtle_General"` เป็น `"TurtleGeneral"` ให้ตรงกับ `MonsterData.lua` แสดงผลไอคอน World Boss สีแดงบนมินิแมพได้ถูกต้อง 100%
 
 ### 5.6 `src/client/UI/NpcDialogueUI.lua`
 

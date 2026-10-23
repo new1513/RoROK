@@ -545,7 +545,43 @@ end
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (19 ไฟล์)
+### ข้อเพิ่มเติม: การซ่อนผังตึกเมือง Prontera เมื่ออยู่แมพอื่น และแก้ชื่อ TurtleGeneral ใน `MinimapView.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/client/UI/MinimapView.lua`
+* **สาเหตุ**:
+  * บล็อกอาคารเมือง Prontera (`PRONTERA_CITY_BLOCKS`) ถูกวาดและแสดงผลบนมินิแมพตลอดเวลา แม้ผู้เล่นจะเดินทางไปแมพอื่น เช่น Morroc, Amatsu หรือ PronteraCulvert
+  * ในการตรวจสอบบอสโลก มีการเช็ค `mId == "Turtle_General"` (มีขีดล่าง `_`) ซึ่งไม่ตรงกับไอดี `"TurtleGeneral"` ใน `MonsterData.lua` ส่งผลให้ไม่แสดงไอคอนบอสสีแดงบนมินิแมพ
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  1. เพิ่มตัวแปร `currentMap = player:GetAttribute("Map") or "Prontera"` และ `isProntera = (currentMap == "Prontera")` แล้วกำหนด `f.Visible = isProntera` หากไม่ใช่แมพ Prontera ให้ซ่อนกรอบตึกทันที
+  2. แก้ไขเงื่อนไขการตรวจจับ World Boss จาก `Turtle_General` เป็น `TurtleGeneral`
+
+```lua
+-- [จุดที่ 1: ซ่อนบล็อกอาคารเมื่อไม่ได้อยู่ Prontera]:
+local currentMap = player:GetAttribute("Map") or "Prontera"
+local isProntera = (currentMap == "Prontera")
+for idx, block in ipairs(PRONTERA_CITY_BLOCKS) do
+    local f = cityBlockFrames[idx]
+    if f then
+        f.Visible = isProntera
+        if isProntera then
+            local diff = block.pos - playerPos
+            local nx = (diff.X / MINIMAP_RANGE) * 0.5 + 0.5
+            local nz = (diff.Z / MINIMAP_RANGE) * 0.5 + 0.5
+            local sw = (block.size.X / MINIMAP_RANGE) * 0.5 * 160
+            local sh = (block.size.Y / MINIMAP_RANGE) * 0.5 * 160
+            f.Position = UDim2.new(nx, -sw / 2, nz, -sh / 2)
+            f.Size = UDim2.new(0, sw, 0, sh)
+        end
+    end
+end
+
+-- [จุดที่ 2: แก้ชื่อ TurtleGeneral]:
+local isWorldBoss = obj:GetAttribute("IsWorldBoss") or mId == "Eddga" or mId == "TurtleGeneral"
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (20 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
@@ -565,7 +601,8 @@ end
 16. `d:\Robox\project01\src\client\UIManager.client.lua`
 17. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
 18. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-19. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+19. `d:\Robox\project01\src\client\UI\MinimapView.lua`
+20. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*

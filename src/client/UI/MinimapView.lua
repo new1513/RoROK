@@ -473,16 +473,21 @@ function MinimapView.init(player, playerGui, remotes, UITheme, openExpandedMapCa
 		end
 
 		-- 1. City block frames
+		local currentMap = player:GetAttribute("Map") or "Prontera"
+		local isProntera = (currentMap == "Prontera")
 		for idx, block in ipairs(PRONTERA_CITY_BLOCKS) do
 			local f = cityBlockFrames[idx]
 			if f then
-				local diff = block.pos - playerPos
-				local nx = (diff.X / MINIMAP_RANGE) * 0.5 + 0.5
-				local nz = (diff.Z / MINIMAP_RANGE) * 0.5 + 0.5
-				local sw = (block.size.X / MINIMAP_RANGE) * 0.5 * 160
-				local sh = (block.size.Y / MINIMAP_RANGE) * 0.5 * 160
-				f.Position = UDim2.new(nx, -sw / 2, nz, -sh / 2)
-				f.Size = UDim2.new(0, sw, 0, sh)
+				f.Visible = isProntera
+				if isProntera then
+					local diff = block.pos - playerPos
+					local nx = (diff.X / MINIMAP_RANGE) * 0.5 + 0.5
+					local nz = (diff.Z / MINIMAP_RANGE) * 0.5 + 0.5
+					local sw = (block.size.X / MINIMAP_RANGE) * 0.5 * 160
+					local sh = (block.size.Y / MINIMAP_RANGE) * 0.5 * 160
+					f.Position = UDim2.new(nx, -sw / 2, nz, -sh / 2)
+					f.Size = UDim2.new(0, sw, 0, sh)
+				end
 			end
 		end
 
@@ -541,7 +546,7 @@ function MinimapView.init(player, playerGui, remotes, UITheme, openExpandedMapCa
 						if monRoot then
 							local diff = monRoot.Position - playerPos
 							local dist = diff.Magnitude
-							local isWorldBoss = obj:GetAttribute("IsWorldBoss") or mId == "Eddga" or mId == "Turtle_General"
+							local isWorldBoss = obj:GetAttribute("IsWorldBoss") or mId == "Eddga" or mId == "TurtleGeneral"
 							local isBoss = obj:GetAttribute("IsBoss") or mId == "Drake" or isWorldBoss
 							local isMini = obj:GetAttribute("IsMiniBoss") or mId == "Minorous"
 							if isBoss or isMini then
