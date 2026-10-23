@@ -217,11 +217,11 @@ function NpcDialogueUI.init(player, playerGui, remotes, UITheme, minimapView, ca
 		dialogWin.Visible = false
 	end)
 
-	-- ── 2. HUD Active Story Quest Tracker (Right Screen) ───────
+	-- ── 2. HUD Active Story Quest Tracker (Left Screen Below Party Roster) ──
 	local hudTracker = makeInstance("Frame", {
 		Name = "StoryQuestTracker",
 		Size = UDim2.new(0, 230, 0, 64),
-		Position = UDim2.new(1, -242, 0, 185), -- Right side below minimap
+		Position = UDim2.new(0, 14, 0, 142), -- ฝั่งซ้ายใต้การ์ดตัวละคร/ปาร์ตี้ ไม่ทับกับ QuestTrackerWidget ฝั่งขวา
 		BackgroundColor3 = hex("141829"),
 		BackgroundTransparency = 0.2,
 		BorderSizePixel = 0,

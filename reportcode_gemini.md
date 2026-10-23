@@ -685,18 +685,8 @@ return {
 
 ### 5.6 `src/client/UI/NpcDialogueUI.lua`
 
-* **จุดที่ 1 (บรรทัด 15 และ 221–230)**:
-  1. รับพารามิเตอร์ `remotes`, `minimapView`, `callbacks` เข้ามาแต่ไม่ได้ใช้งานเลย (ไปเรียก `ReplicatedStorage:WaitForChild("RemoteEvents")` ซ้ำเองในบรรทัด 20)
-  2. สร้างกรอบ `StoryQuestTracker` ไว้ที่ตำแหน่ง `UDim2.new(1, -242, 0, 185)` ซึ่ง **ซ้อนทับกับ `QuestTrackerWidget` ของ `MinimapView.lua` (`UDim2.new(1, -172, 0, 178)`) และ `PvPStatusBar` ของ `PvPArenaUI.client.lua` (`UDim2.new(1, -370, 0, 195)`)** บนหน้าจอฝั่งขวาใต้แผนที่!
-
-```lua
--- [บรรทัด 221-230]
-local hudTracker = makeInstance("Frame", {
-	Name = "StoryQuestTracker",
-	Size = UDim2.new(0, 230, 0, 64),
-	Position = UDim2.new(1, -242, 0, 185), -- ❌ [จุดที่เขียนไม่ดี]: ตำแหน่ง Y=185 ด้านขวาของจอ ทับซ้อนกับ QuestTrackerWidget ของ MinimapView (Y=178) พอดี!
--- ✅ [วิธีแก้]: รวมรายการเควสเนื้อเรื่องเข้าใน QuestTrackerWidget เดียวกับเควสประจำวันใน MinimapView หรือขยับตำแหน่งไม่ให้ทับกัน
-```
+* **จุดที่ 1 (บรรทัด 15 และ 221–230)** [✅ แก้ไขแล้ว]:
+  1. ย้ายตำแหน่งกรอบเควสเนื้อเรื่อง `StoryQuestTracker` จากฝั่งขวา (`UDim2.new(1, -242, 0, 185)`) ไปไว้ฝั่งซ้ายใต้การ์ดตัวละคร/ปาร์ตี้ที่ `UDim2.new(0, 14, 0, 142)` ทำให้ไม่ซ้อนทับกับ `QuestTrackerWidget` ของมินิแมพ และ `PvPStatusBar` ทางฝั่งขวาของหน้าจอ 100% เรียบร้อยแล้ว
 
 ### 5.7 `src/client/UI/UITheme.lua`
 

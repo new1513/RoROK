@@ -817,7 +817,31 @@ end
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (26 ไฟล์)
+### ข้อเพิ่มเติม: การย้ายตำแหน่งกรอบ StoryQuestTracker ไม่ให้ทับกับมินิแมพใน `NpcDialogueUI.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/client/UI/NpcDialogueUI.lua`
+* **สาเหตุ**:
+  * กรอบติดตามเควสเนื้อเรื่อง `StoryQuestTracker` เดิมถูกวางไว้ที่ตำแหน่ง `UDim2.new(1, -242, 0, 185)` ทางฝั่งขวาของหน้าจอใต้แผนที่ ซึ่งไปทับซ้อนกับ `QuestTrackerWidget` (กรอบเควสประจำวัน) ของ `MinimapView` และแถบ `PvPStatusBar` ของสนามประลอง
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ย้ายตำแหน่ง `Position` ของ `StoryQuestTracker` ไปไว้ที่ `UDim2.new(0, 14, 0, 142)` ทางฝั่งซ้ายของหน้าจอใต้การ์ดตัวละครและรายชื่อปาร์ตี้ ทำให้ทั้งสองกรอบแสดงผลแยกฝั่งกันอย่างชัดเจน ไม่บังข้อมูลซึ่งกันและกัน
+
+```lua
+-- [จุดที่แก้ใน NpcDialogueUI.lua บรรทัด 220-230]:
+local hudTracker = makeInstance("Frame", {
+    Name = "StoryQuestTracker",
+    Size = UDim2.new(0, 230, 0, 64),
+    Position = UDim2.new(0, 14, 0, 142), -- ฝั่งซ้ายใต้การ์ดตัวละคร/ปาร์ตี้ ไม่ทับกับ QuestTrackerWidget ฝั่งขวา
+    BackgroundColor3 = hex("141829"),
+    BackgroundTransparency = 0.2,
+    BorderSizePixel = 0,
+    Visible = false,
+    ZIndex = 15,
+}, dialogueGui)
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (27 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
@@ -843,8 +867,9 @@ end
 22. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
 23. `d:\Robox\project01\src\client\UI\MinimapView.lua`
 24. `d:\Robox\project01\src\client\UI\HotbarView.lua`
-25. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
-26. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+25. `d:\Robox\project01\src\client\UI\NpcDialogueUI.lua`
+26. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
+27. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*
