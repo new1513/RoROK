@@ -974,6 +974,35 @@ cs.HandleSkillUse = function(player, skillId, skillLevel, targetId)
 
 ---
 
+### ข้อเพิ่มเติม: การแก้ไข Avatar Preview ใน `WindowSystem.lua` ให้อาวุธและโล่ติดตามตัวละคร
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/client/UI/WindowSystem.lua`
+* **สาเหตุ**:
+  * ในฟังก์ชัน `refreshAvatarPreview` เดิมมีการตั้งค่า `desc.Anchored = true` ให้กับทุกชิ้นส่วนก่อน แล้วจึงสั่ง `hrp.CFrame = CFrame.new(0, 0, 0)` ทำให้เฉพาะ `HumanoidRootPart` ตัวเดียวที่ย้ายไปที่จุดกำเนิด ส่วนอาวุธ โล่ และเครื่องประดับที่เชื่อมอยู่ด้วย Weld กลายเป็นถูกตรึง Anchored ค้างอยู่ที่พิกัดเดิมของผู้เล่นในโลก ทำให้ในกรอบพรีวิว 3D ตัวละครไม่มีอาวุธหรือโล่ถืออยู่
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ย้ายบล็อกกำหนด `clone.PrimaryPart = hrp` และสั่ง `clone:PivotTo(CFrame.new(0, 0, 0))` ขึ้นมาทำก่อนการวนลูปตั้งค่า `desc.Anchored = true` เพื่อให้อาวุธและโล่ทุกชิ้นที่เชื่อมต่ออยู่ถูกย้ายพิกัดตามตัวละครไปอยู่ในกรอบ ViewportFrame อย่างสมบูรณ์
+
+```lua
+-- [ใน refreshAvatarPreview]:
+local hrp = clone:FindFirstChild("HumanoidRootPart") or clone:FindFirstChild("Torso")
+if hrp then
+	clone.PrimaryPart = hrp
+	clone:PivotTo(CFrame.new(0, 0, 0))
+	vCamera.CFrame = CFrame.new(Vector3.new(0, 0.4, 7.8), Vector3.new(0, 0.2, 0))
+end
+
+for _, desc in ipairs(clone:GetDescendants()) do
+	if desc:IsA("Script") or desc:IsA("LocalScript") or desc:IsA("Sound") or desc:IsA("BillboardGui") then
+		desc:Destroy()
+	elseif desc:IsA("BasePart") then
+		desc.Anchored = true
+		desc.CanCollide = false
+	end
+end
+```
+
+---
+
 ## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (30 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`

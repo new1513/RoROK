@@ -719,6 +719,7 @@ end)
 * **จุดที่ 3 (บรรทัด 1064–1094)**:
   1. `renderInventory` เรียก `task.spawn(refreshAvatarPreview)` ซึ่งสั่ง `char:Clone()` ตัวละคร 3D ทั้งตัวทุกครั้งที่ข้อมูลอัปเดต (และเนื่องจาก `GameManager` ส่ง `UpdateCharacterData` ทุก 1 วินาที จึงเกิดการ `Clone()` โมเดลตัวละครทุก 1 วินาทีแม้ไม่ได้เปิดหน้าต่างกระเป๋า!)
   2. เมื่อกดเปิดกระเป๋าผ่าน `toggleInventory()` (บรรทัด 1072–1080) จะเปลี่ยน `inventoryWin.Visible = true` ซึ่งไปกระตุ้น `inventoryWin:GetPropertyChangedSignal("Visible")` (บรรทัด 1082–1094) ทำให้เกิดการเรียก `requestInventoryRemote:InvokeServer()` **ซ้ำ 2 ครั้งซ้อน** ในเวลาเดียวกัน!
+* **จุดที่ 4 (บรรทัด 482–496)** [✅ แก้ไขแล้ว]: ใน `refreshAvatarPreview` สลับให้เรียก `clone:PivotTo(CFrame.new(0, 0, 0))` ก่อนตั้งค่า `desc.Anchored = true` เพื่อให้อาวุธและโล่ที่เชื่อมอยู่กับมือตัวละครย้ายตำแหน่งตามมาอยู่ในกรอบพรีวิว 3D ViewportFrame อย่างถูกต้อง 100% ไม่ลอยค้างนอกกรอบ
 
 ```lua
 -- [บรรทัด 1064-1094]

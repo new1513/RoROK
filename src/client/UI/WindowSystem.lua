@@ -479,6 +479,13 @@ function WindowSystem.init(player, playerGui, remotes, UITheme, minimapView, cal
 		clone.Name = "PreviewAvatar"
 		clone.Parent = avatarViewport
 
+		local hrp = clone:FindFirstChild("HumanoidRootPart") or clone:FindFirstChild("Torso")
+		if hrp then
+			clone.PrimaryPart = hrp
+			clone:PivotTo(CFrame.new(0, 0, 0))
+			vCamera.CFrame = CFrame.new(Vector3.new(0, 0.4, 7.8), Vector3.new(0, 0.2, 0))
+		end
+
 		for _, desc in ipairs(clone:GetDescendants()) do
 			if desc:IsA("Script") or desc:IsA("LocalScript") or desc:IsA("Sound") or desc:IsA("BillboardGui") then
 				desc:Destroy()
@@ -486,12 +493,6 @@ function WindowSystem.init(player, playerGui, remotes, UITheme, minimapView, cal
 				desc.Anchored = true
 				desc.CanCollide = false
 			end
-		end
-
-		local hrp = clone:FindFirstChild("HumanoidRootPart") or clone:FindFirstChild("Torso")
-		if hrp then
-			hrp.CFrame = CFrame.new(0, 0, 0)
-			vCamera.CFrame = CFrame.new(Vector3.new(0, 0.4, 7.8), Vector3.new(0, 0.2, 0))
 		end
 	end
 
