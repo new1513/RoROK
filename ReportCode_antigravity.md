@@ -1124,6 +1124,35 @@ end)
 
 ---
 
+### ข้อเพิ่มเติม: การเพิ่มเอฟเฟคแสงสีและแอนิเมชันสกิลคลาส 2 ใน `CombatVFX.client.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/client/CombatVFX.client.lua`
+* **สาเหตุ**:
+  * สกิลคลาส 2 เช่น `LordOfVermilion`, `MagnusExorcismus`, `LexAeterna`, `Quagmire`, `LandMine`, `BowlingBash`, `HammerFall`, `MeteorAssault`, `JupitelThunder`, `Judex`, `SoulStrike` เดิมไม่ถูกระบุในเงื่อนไข ทำให้ตกไปที่บล็อก `else` และแสดงท่าฟันดาบธรรมดา (`Slash`)
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * เพิ่มการเช็คสกิลเวทมนตร์ใหญ่ (`LordOfVermilion`, `MagnusExorcismus`) ให้ร่ายเวทและสร้างเสาเวทมนตร์ 6 ต้นสุ่มตกลงมาในรัศมี
+  * เพิ่มการเช็คสกิลดีบัฟ/กับดัก (`LexAeterna`, `Quagmire`, `LandMine`) ให้สร้างวงเวทย์สีเฉพาะตัวบนพื้น
+  * เพิ่มสกิลสายยิง (`JupitelThunder`, `Judex`, `SoulStrike`) ให้ยิงลำแสงกระแทกเป้าหมายต่อเนื่อง
+  * เพิ่มสกิลโจมตีกายภาพวงกว้าง (`BowlingBash`, `HammerFall`, `MeteorAssault`) ให้สร้างคลื่นดาบและวงระเบิดกระแทก
+
+```lua
+-- [ใน CombatVFX.client.lua - playSkillVFX]:
+elseif skillId == "LordOfVermilion" or skillId == "MagnusExorcismus" then
+	playCharacterActionAnimation(casterPlayer, "Cast")
+	local aoeColor = (skillId == "MagnusExorcismus") and Color3.fromRGB(255, 238, 125) or Color3.fromRGB(115, 245, 155)
+	spawnGroundMagicCircle(root.Position, aoeColor, 4.2, 0.8)
+	spawnGroundMagicCircle(targetPos, aoeColor, sDef.aoeRadius or 14, 1.45)
+	...
+elseif skillId == "LexAeterna" or skillId == "Quagmire" or skillId == "LandMine" then
+	playCharacterActionAnimation(casterPlayer, "Cast")
+	...
+elseif skillId == "MagnumBreak" or skillId == "CartRevolution" or skillId == "BowlingBash" or skillId == "HammerFall" or skillId == "MeteorAssault" then
+	playCharacterActionAnimation(casterPlayer, "Slash")
+	...
+```
+
+---
+
 ## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (32 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`

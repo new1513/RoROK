@@ -479,6 +479,7 @@ hum:Move(move, false) -- ❌ [จุดที่เขียนไม่ดี]:
 
 * **จุดที่ 1 (บรรทัด 317 และ 350–355)** [✅ แก้ไขแล้ว]: เพิ่มการเช็ค `"Hunter"` สำหรับแอนิเมชันยิงธนูและกระสุนลูกศร (ทั้ง Basic Attack, DoubleStrafe, ArrowShower, BlitzBeat, FalconAssault) รวมถึงเพิ่ม `"Wizard"`, `"Priest"`, `"Acolyte"` สำหรับท่าทางร่ายเวทมนตร์เรียบร้อย 100%
 * **จุดที่ 2 (บรรทัด 369–448)** [✅ แก้ไขแล้ว]: เพิ่มระบบเปลี่ยนบรรยากาศ แสงสี หมอก (Atmosphere) และโทนสี (ColorCorrection) แบบไดนามิกแยกตามแผนที่ (`Prontera` แดดบ่ายสดใส, `PronteraCulvert` ดันเจี้ยนมืดสลัวหมอกหนา, `Morroc` ทะเลทรายสว่างจ้าสีทอง, `Amatsu` เมืองน้ำซากุระโทนชมพูอบอุ่น, และ `PvPArena` ลานประลองยามเย็น) พร้อม Tween 1.2 วินาทีอัตโนมัติตามแอตทริบิวต์ `"Map"` เรียบร้อย 100%
+* **จุดที่ 3 (บรรทัด 297–358)** [✅ แก้ไขแล้ว]: ปรับปรุง `playSkillVFX` ให้รองรับสกิลของคลาส 2 ครบถ้วน (`LordOfVermilion`, `MagnusExorcismus`, `LexAeterna`, `Quagmire`, `LandMine`, `BowlingBash`, `HammerFall`, `MeteorAssault`, `JupitelThunder`, `Judex`, `SoulStrike`, `SpiralPierce`, `SonicBlow`) แสดงท่าทาง Cast / Slash และเอฟเฟกต์เสาเวท/วงเวทบนพื้นตรงตามสายอาชีพ 100% ไม่หลุดเป็นท่าฟันดาบธรรมดา
 
 ```lua
 -- [บรรทัด 350-359]

@@ -294,17 +294,41 @@ local function playSkillVFX(casterPlayer, targetPos, skillId)
 				Debris:AddItem(meteor, 0.4)
 			end)
 		end
-	elseif skillId == "MagnumBreak" or skillId == "CartRevolution" then
+	elseif skillId == "LordOfVermilion" or skillId == "MagnusExorcismus" then
+		playCharacterActionAnimation(casterPlayer, "Cast")
+		local aoeColor = (skillId == "MagnusExorcismus") and Color3.fromRGB(255, 238, 125) or Color3.fromRGB(115, 245, 155)
+		spawnGroundMagicCircle(root.Position, aoeColor, 4.2, 0.8)
+		spawnGroundMagicCircle(targetPos, aoeColor, sDef.aoeRadius or 14, 1.45)
+		for i = 1, 6 do
+			task.delay((i - 1) * 0.09, function()
+				local ox, oz = math.random(-8, 8), math.random(-8, 8)
+				local pPos = targetPos + Vector3.new(ox, 0, oz)
+				local pillar = makeVFXPart(Vector3.new(26, 2.4, 2.4), CFrame.new(pPos + Vector3.new(0, 11, 0)) * CFrame.Angles(0, 0, math.rad(90)), aoeColor, Enum.PartType.Cylinder, 0.15)
+				TweenService:Create(pillar, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Size = Vector3.new(26, 0.2, 0.2), Transparency = 1,
+				}):Play()
+				Debris:AddItem(pillar, 0.32)
+				spawnImpactBurst(pPos, aoeColor, 1.1)
+			end)
+		end
+	elseif skillId == "LexAeterna" or skillId == "Quagmire" or skillId == "LandMine" then
+		playCharacterActionAnimation(casterPlayer, "Cast")
+		local debuffColor = (skillId == "Quagmire") and Color3.fromRGB(145, 195, 75)
+			or ((skillId == "LandMine") and Color3.fromRGB(255, 145, 55) or Color3.fromRGB(255, 215, 95))
+		spawnGroundMagicCircle(targetPos, debuffColor, sDef.aoeRadius or 8, 1.2)
+		spawnImpactBurst(targetPos, debuffColor, 1.25)
+	elseif skillId == "MagnumBreak" or skillId == "CartRevolution" or skillId == "BowlingBash" or skillId == "HammerFall" or skillId == "MeteorAssault" then
 		playCharacterActionAnimation(casterPlayer, "Slash")
 		local radius = sDef.aoeRadius or 10
 		spawnGroundMagicCircle(root.Position, color, radius, 0.7)
 		spawnSlashWave(root, targetPos, color, 1.65)
-		spawnImpactBurst(root.Position, color, 1.8)
-	elseif skillId == "FireBolt" or skillId == "ColdBolt" or skillId == "LightningBolt" or skillId == "HolyLight" then
+		spawnImpactBurst(targetPos, color, 1.6)
+	elseif skillId == "FireBolt" or skillId == "ColdBolt" or skillId == "LightningBolt" or skillId == "HolyLight" or skillId == "JupitelThunder" or skillId == "Judex" or skillId == "SoulStrike" then
 		playCharacterActionAnimation(casterPlayer, "Cast")
 		spawnGroundMagicCircle(root.Position, color, 3.6, 0.65)
-		for i = 1, 3 do
-			task.delay((i - 1) * 0.09, function()
+		local hits = (skillId == "JupitelThunder") and 5 or 3
+		for i = 1, hits do
+			task.delay((i - 1) * 0.08, function()
 				local beam = makeVFXPart(Vector3.new(22, 1.4, 1.4), CFrame.new(targetPos + Vector3.new(0, 10, 0)) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.PartType.Cylinder, 0.15)
 				TweenService:Create(beam, TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 					Size = Vector3.new(22, 0.1, 0.1),
@@ -325,7 +349,7 @@ local function playSkillVFX(casterPlayer, targetPos, skillId)
 			end)
 		end
 	else
-		-- Melee Physical Skills (Bash, Backstab, Envenom, Mammonite, NoviceStrike)
+		-- Melee Physical Skills (Bash, Backstab, Envenom, Mammonite, SpiralPierce, ClashingSpiral, SonicBlow)
 		playCharacterActionAnimation(casterPlayer, "Slash")
 		local slashColor = (skillId == "Mammonite") and Color3.fromRGB(255, 215, 65)
 			or ((skillId == "Envenom") and Color3.fromRGB(155, 240, 80) or color)
