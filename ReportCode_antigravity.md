@@ -1098,6 +1098,32 @@ end
 
 ---
 
+### ข้อเพิ่มเติม: ระบบเปลี่ยนบรรยากาศ แสงสี และหมอกแบบไดนามิกแยกตามแผนที่ใน `CombatVFX.client.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/client/CombatVFX.client.lua`
+* **สาเหตุ**:
+  * แสงสีและหมอกบรรยากาศในเกมเดิมเป็นค่าคงที่ค่าเดียว ทำให้เมื่อผู้เล่นเดินทางไปยังดันเจี้ยนใต้ดิน (Culvert), ทะเลทราย (Morroc), เกาะซากุระ (Amatsu) หรือลานประลอง (PvPArena) บรรยากาศยังคงสว่างเหมือนเมือง Prontera ไม่ให้อารมณ์ตามธีมแมพ
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * เพิ่มตาราง `MAP_LIGHTING_PRESETS` ครบทั้ง 5 แผนที่หลัก
+  * สร้างฟังก์ชัน `applyMapAtmosphere(mapName)` ใช้ `TweenService` ค่อยๆ เปลี่ยนค่าแสงสี (`ClockTime`, `Brightness`, `Ambient`), หมอก (`Atmosphere`), และฟิลเตอร์สี (`ColorCorrection`) ภายใน 1.2 วินาทีอย่างนุ่มนวล
+  * ผูกเข้ากับ `LocalPlayer:GetAttributeChangedSignal("Map")` เพื่อสลับบรรยากาศอัตโนมัติเมื่อย้ายแผนที่
+
+```lua
+-- [ใน CombatVFX.client.lua]:
+local MAP_LIGHTING_PRESETS = {
+	Prontera        = { ClockTime = 15.0, Brightness = 2.25, ... },
+	PronteraCulvert = { ClockTime = 20.2, Brightness = 1.15, AtmoDensity = 0.36, ... },
+	Morroc          = { ClockTime = 13.8, Brightness = 2.65, AtmoColor = Color3.fromRGB(248, 212, 158), ... },
+	Amatsu          = { ClockTime = 16.6, Brightness = 2.15, AtmoColor = Color3.fromRGB(255, 218, 232), ... },
+	PvPArena        = { ClockTime = 17.2, Brightness = 2.10, ... },
+}
+LocalPlayer:GetAttributeChangedSignal("Map"):Connect(function()
+	applyMapAtmosphere(LocalPlayer:GetAttribute("Map") or "Prontera")
+end)
+```
+
+---
+
 ## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (32 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`

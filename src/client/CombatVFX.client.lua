@@ -365,3 +365,84 @@ if PlayCombatVFX then
 end
 
 print("[CombatVFX] 3D Slash, Bow, Cast Animations & Ragnarok M Skill VFX initialized!")
+
+-- ============================================================
+-- 3. DYNAMIC MAP ATMOSPHERE & LIGHTING PRESETS (PER-MAP VIBE)
+-- ============================================================
+local Lighting = game:GetService("Lighting")
+
+local MAP_LIGHTING_PRESETS = {
+	Prontera = {
+		ClockTime = 15.0, Brightness = 2.25,
+		Ambient = Color3.fromRGB(102, 110, 128), OutdoorAmbient = Color3.fromRGB(145, 154, 175),
+		AtmoDensity = 0.20, AtmoHaze = 0.95,
+		AtmoColor = Color3.fromRGB(205, 224, 252), AtmoDecay = Color3.fromRGB(148, 170, 210),
+		TintColor = Color3.fromRGB(255, 250, 244), Saturation = 0.15, Contrast = 0.10,
+	},
+	PronteraCulvert = {
+		ClockTime = 20.2, Brightness = 1.15,
+		Ambient = Color3.fromRGB(48, 52, 74), OutdoorAmbient = Color3.fromRGB(62, 68, 95),
+		AtmoDensity = 0.36, AtmoHaze = 1.85,
+		AtmoColor = Color3.fromRGB(72, 85, 125), AtmoDecay = Color3.fromRGB(38, 44, 68),
+		TintColor = Color3.fromRGB(210, 222, 255), Saturation = 0.08, Contrast = 0.16,
+	},
+	Morroc = {
+		ClockTime = 13.8, Brightness = 2.65,
+		Ambient = Color3.fromRGB(132, 108, 82), OutdoorAmbient = Color3.fromRGB(178, 148, 112),
+		AtmoDensity = 0.25, AtmoHaze = 1.45,
+		AtmoColor = Color3.fromRGB(248, 212, 158), AtmoDecay = Color3.fromRGB(205, 148, 88),
+		TintColor = Color3.fromRGB(255, 242, 218), Saturation = 0.18, Contrast = 0.12,
+	},
+	Amatsu = {
+		ClockTime = 16.6, Brightness = 2.15,
+		Ambient = Color3.fromRGB(118, 98, 115), OutdoorAmbient = Color3.fromRGB(165, 142, 162),
+		AtmoDensity = 0.22, AtmoHaze = 1.15,
+		AtmoColor = Color3.fromRGB(255, 218, 232), AtmoDecay = Color3.fromRGB(215, 162, 192),
+		TintColor = Color3.fromRGB(255, 244, 248), Saturation = 0.18, Contrast = 0.10,
+	},
+	PvPArena = {
+		ClockTime = 17.2, Brightness = 2.10,
+		Ambient = Color3.fromRGB(95, 88, 112), OutdoorAmbient = Color3.fromRGB(135, 125, 152),
+		AtmoDensity = 0.24, AtmoHaze = 1.10,
+		AtmoColor = Color3.fromRGB(225, 195, 175), AtmoDecay = Color3.fromRGB(145, 110, 125),
+		TintColor = Color3.fromRGB(255, 245, 238), Saturation = 0.16, Contrast = 0.14,
+	},
+}
+
+local function applyMapAtmosphere(mapName)
+	local preset = MAP_LIGHTING_PRESETS[mapName] or MAP_LIGHTING_PRESETS.Prontera
+	local info = TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+
+	TweenService:Create(Lighting, info, {
+		ClockTime = preset.ClockTime,
+		Brightness = preset.Brightness,
+		Ambient = preset.Ambient,
+		OutdoorAmbient = preset.OutdoorAmbient,
+	}):Play()
+
+	local atmo = Lighting:FindFirstChild("RoROK_Atmosphere") or Lighting:FindFirstChildOfClass("Atmosphere")
+	if atmo then
+		TweenService:Create(atmo, info, {
+			Density = preset.AtmoDensity,
+			Haze = preset.AtmoHaze,
+			Color = preset.AtmoColor,
+			Decay = preset.AtmoDecay,
+		}):Play()
+	end
+
+	local cc = Lighting:FindFirstChild("RoROK_ColorCorrection") or Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
+	if cc then
+		TweenService:Create(cc, info, {
+			TintColor = preset.TintColor,
+			Saturation = preset.Saturation,
+			Contrast = preset.Contrast,
+		}):Play()
+	end
+end
+
+LocalPlayer:GetAttributeChangedSignal("Map"):Connect(function()
+	applyMapAtmosphere(LocalPlayer:GetAttribute("Map") or "Prontera")
+end)
+task.defer(function()
+	applyMapAtmosphere(LocalPlayer:GetAttribute("Map") or "Prontera")
+end)
