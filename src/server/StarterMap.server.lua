@@ -3750,29 +3750,7 @@ end
 
 -- ============================================================
 
-Lighting.ClockTime = 15.2
-
-Lighting.Brightness = 2.1
-
-Lighting.Ambient = Color3.fromRGB(116, 119, 132)
-
-Lighting.OutdoorAmbient = Color3.fromRGB(157, 164, 175)
-
-local atmosphere = Lighting:FindFirstChild("RoROK_TownAtmosphere") or Instance.new("Atmosphere")
-
-atmosphere.Name = "RoROK_TownAtmosphere"
-
-atmosphere.Color = Color3.fromRGB(207, 223, 255)
-
-atmosphere.Decay = Color3.fromRGB(135, 149, 171)
-
-atmosphere.Density = 0.16
-
-atmosphere.Haze = 0.8
-
-atmosphere.Glare = 0.08
-
-atmosphere.Parent = Lighting
+-- แสงและบรรยากาศหลักจัดการรวมศูนย์ที่ VisualRigAndLighting.server.lua
 
 
 

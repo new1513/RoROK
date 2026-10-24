@@ -1051,6 +1051,53 @@ end
 
 ---
 
+### ข้อเพิ่มเติม: การรวมศูนย์การจัดการ Atmosphere และแสงสีใน Lighting (`StarterMap.server.lua` & `VisualRigAndLighting.server.lua`)
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/StarterMap.server.lua`
+  * `src/server/VisualRigAndLighting.server.lua`
+* **สาเหตุ**:
+  * เกิดการสร้าง `Atmosphere` ซ้อนกัน 2 ตัวในบริการ `Lighting` (`RoROK_TownAtmosphere` จาก StarterMap ซ้อนทับกับ `RoROK_Atmosphere` จาก VisualRigAndLighting) ทำให้โทนสีของโลก ท้องฟ้า และหมอกบรรยากาศขัดแย้งกัน
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ลบการสร้าง `RoROK_TownAtmosphere` และการตั้งค่า Lighting ออกจาก `StarterMap.server.lua`
+  * ใน `VisualRigAndLighting.server.lua` ปรับฟังก์ชัน `setupAtmosphereAndLighting` ให้กวาดล้างอ็อบเจ็กต์แสงเก่าทั้งหมดก่อน แล้วสร้างชุดมาตรฐาน Ragnarok M (`RoROK_Atmosphere`, `RoROK_Bloom`, `RoROK_ColorCorrection`, `RoROK_SunRays`) เพียงชุดเดียว
+
+```lua
+-- [ใน VisualRigAndLighting.server.lua]:
+local function setupAtmosphereAndLighting()
+	pcall(function() Lighting.Technology = Enum.Technology.ShadowMap end)
+	Lighting.GlobalShadows = true
+	Lighting.Brightness = 2.25
+	Lighting.ClockTime = 15.0
+	Lighting.GeographicLatitude = 28
+	Lighting.Ambient = Color3.fromRGB(102, 110, 128)
+	Lighting.OutdoorAmbient = Color3.fromRGB(145, 154, 175)
+	Lighting.ColorShift_Top = Color3.fromRGB(255, 240, 210)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(78, 90, 118)
+	Lighting.EnvironmentDiffuseScale = 0.65
+	Lighting.EnvironmentSpecularScale = 0.75
+
+	-- ล้างเอฟเฟคแสงเก่าทุกตัวรวมถึง RoROK_TownAtmosphere ที่ซ้ำซ้อน
+	for _, child in ipairs(Lighting:GetChildren()) do
+		if child:IsA("Atmosphere") or child:IsA("BloomEffect") or child:IsA("ColorCorrectionEffect") or child:IsA("SunRaysEffect") then
+			child:Destroy()
+		end
+	end
+
+	local atmo = Instance.new("Atmosphere")
+	atmo.Name = "RoROK_Atmosphere"
+	atmo.Density = 0.20
+	atmo.Offset = 0.10
+	atmo.Color = Color3.fromRGB(205, 224, 252)
+	atmo.Decay = Color3.fromRGB(148, 170, 210)
+	atmo.Glare = 0.12
+	atmo.Haze = 0.95
+	atmo.Parent = Lighting
+	...
+end
+```
+
+---
+
 ## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (32 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`

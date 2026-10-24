@@ -390,6 +390,7 @@ DataStore.AddGold(killer, bonusZeny) -- ❌ [จุดที่เขียน�
 * **จุดที่ 2 (บรรทัด 913–929 และ 1319–1351)** [✅ แก้ไขแล้ว]:
   1. ลบการยิง `OpenNpcDialogue:FireClient(player, "Blacksmith")` ใน `smithPrompt.Triggered` ออก ให้เปิดเฉพาะหน้าต่างตีบวก (`OpenRefinement:FireClient(player)`) เท่านั้น ไม่เด้ง 2 หน้าต่างซ้อนทับกัน
   2. กำหนด `remoteName = "OpenWorldTravel"` ให้กับ `HarborMasterNPC` โดยตรง และไม่ยิง `OpenNpcDialogue` สำหรับ NPC ท่าเรือ ทำให้หน้าต่างแผนที่โลกเปิดเพียงหน้าต่างเดียวอย่างสมบูรณ์
+* **จุดที่ 3 (บรรทัด 3753–3776)** [✅ แก้ไขแล้ว]: ลบการสร้าง `RoROK_TownAtmosphere` ซ้ำซ้อนใน `StarterMap.server.lua` ออก โดยรวมศูนย์การจัดการแสงสีและบรรยากาศ (Atmosphere, Bloom, ColorCorrection, SunRays) ไว้ที่ `VisualRigAndLighting.server.lua` จุดเดียว พร้อมกวาดล้างเอฟเฟกต์แสงเก่าก่อนสร้างใหม่ 100%
 
 ### 3.16 `src/server/TownShop.server.lua`
 

@@ -32,48 +32,52 @@ end
 local function setupAtmosphereAndLighting()
 	pcall(function() Lighting.Technology = Enum.Technology.ShadowMap end)
 	Lighting.GlobalShadows = true
-	Lighting.Brightness = 2.4
-	Lighting.ClockTime = 15.2
-	Lighting.GeographicLatitude = 32
-	Lighting.Ambient = Color3.fromRGB(92, 98, 118)
-	Lighting.OutdoorAmbient = Color3.fromRGB(135, 142, 162)
-	Lighting.ColorShift_Top = Color3.fromRGB(255, 236, 200)
-	Lighting.ColorShift_Bottom = Color3.fromRGB(70, 82, 110)
+	Lighting.Brightness = 2.25
+	Lighting.ClockTime = 15.0
+	Lighting.GeographicLatitude = 28
+	Lighting.Ambient = Color3.fromRGB(102, 110, 128)
+	Lighting.OutdoorAmbient = Color3.fromRGB(145, 154, 175)
+	Lighting.ColorShift_Top = Color3.fromRGB(255, 240, 210)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(78, 90, 118)
+	Lighting.EnvironmentDiffuseScale = 0.65
+	Lighting.EnvironmentSpecularScale = 0.75
 
-	for _, name in ipairs({"RoROK_Atmosphere", "RoROK_Bloom", "RoROK_ColorCorrection", "RoROK_SunRays"}) do
-		local old = Lighting:FindFirstChild(name)
-		if old then old:Destroy() end
+	-- ล้างเอฟเฟคแสงเก่าทุกตัวรวมถึง RoROK_TownAtmosphere ที่ซ้ำซ้อน
+	for _, child in ipairs(Lighting:GetChildren()) do
+		if child:IsA("Atmosphere") or child:IsA("BloomEffect") or child:IsA("ColorCorrectionEffect") or child:IsA("SunRaysEffect") then
+			child:Destroy()
+		end
 	end
 
 	local atmo = Instance.new("Atmosphere")
 	atmo.Name = "RoROK_Atmosphere"
-	atmo.Density = 0.24
-	atmo.Offset = 0.12
-	atmo.Color = Color3.fromRGB(198, 218, 248)
-	atmo.Decay = Color3.fromRGB(145, 165, 205)
-	atmo.Glare = 0.18
-	atmo.Haze = 1.15
+	atmo.Density = 0.20
+	atmo.Offset = 0.10
+	atmo.Color = Color3.fromRGB(205, 224, 252)
+	atmo.Decay = Color3.fromRGB(148, 170, 210)
+	atmo.Glare = 0.12
+	atmo.Haze = 0.95
 	atmo.Parent = Lighting
 
 	local bloom = Instance.new("BloomEffect")
 	bloom.Name = "RoROK_Bloom"
-	bloom.Intensity = 0.45
-	bloom.Size = 24
-	bloom.Threshold = 1.65
+	bloom.Intensity = 0.35
+	bloom.Size = 22
+	bloom.Threshold = 1.75
 	bloom.Parent = Lighting
 
 	local cc = Instance.new("ColorCorrectionEffect")
 	cc.Name = "RoROK_ColorCorrection"
 	cc.Brightness = 0.02
-	cc.Contrast = 0.12
-	cc.Saturation = 0.16
-	cc.TintColor = Color3.fromRGB(255, 250, 242)
+	cc.Contrast = 0.10
+	cc.Saturation = 0.15
+	cc.TintColor = Color3.fromRGB(255, 250, 244)
 	cc.Parent = Lighting
 
 	local sunRays = Instance.new("SunRaysEffect")
 	sunRays.Name = "RoROK_SunRays"
-	sunRays.Intensity = 0.10
-	sunRays.Spread = 0.60
+	sunRays.Intensity = 0.08
+	sunRays.Spread = 0.55
 	sunRays.Parent = Lighting
 end
 setupAtmosphereAndLighting()
