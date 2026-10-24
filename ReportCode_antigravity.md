@@ -945,6 +945,31 @@ TwoHandSpear = {
 	scale = Vector3.new(1.15, 1.85, 1.15), size = Vector3.new(0.6, 5.4, 0.6), arm = "Right Arm",
 	gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -1.25, 0),
 },
+
+-- [จุดที่ 3: ปรับปรุงการแสดงโล่และยึดด้วย Weld แน่นหนา]:
+local TwoHandedTypes = {
+	TwoHandSword = true, TwoHandSpear = true, TwoHandAxe = true,
+	Bow = true, Katar = true, Staff = true,
+}
+local curClass = player:GetAttribute("Class") or (data and data.Class) or "Novice"
+local canShowShield = (not TwoHandedTypes[weaponType]) and (eqShieldId ~= nil or curClass == "Knight" or curClass == "LordKnight")
+if leftArm and canShowShield then
+	local shield = makePart(rigFolder, "BucklerShield", Vector3.new(0.28, 1.95, 1.45), Color3.fromRGB(52, 76, 128), Enum.Material.Metal)
+	local sWeld = Instance.new("Weld")
+	sWeld.Name = "ShieldGripWeld"
+	sWeld.Part0 = leftArm
+	sWeld.Part1 = shield
+	sWeld.C0 = CFrame.new(-0.56, isR6 and -0.25 or 0, 0)
+	sWeld.Parent = shield
+	...
+end
+
+-- [จุดที่ 4: รองรับ targetId ทั้งแบบ Model Instance และ String ใน cs.HandleSkillUse]:
+cs.HandleSkillUse = function(player, skillId, skillLevel, targetId)
+	local targetMonster = (typeof(targetId) == "Instance" and targetId)
+		or ((type(targetId) == "string" and targetId ~= "") and Workspace:FindFirstChild(targetId, true))
+		or nil
+
 ```
 
 ---

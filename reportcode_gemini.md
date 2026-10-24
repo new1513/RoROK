@@ -414,10 +414,11 @@ end
 
 ### 3.18 `src/server/VisualRigAndLighting.server.lua`
 
-* **จุดที่ 1 (บรรทัด 121–129, 159–210)** [✅ แก้ไขแล้ว]:
+* **จุดที่ 1 (บรรทัด 121–129, 159–210, 289–309)** [✅ แก้ไขแล้ว]:
   1. ปรับปรุง `getDefaultWeaponTypeForClass` ให้รองรับอาชีพคลาส 2 ครบทุกสาย (`LordKnight` ➔ `TwoHandSpear`, `Wizard` ➔ `Staff`, `Priest` ➔ `Mace`, `Hunter` ➔ `Bow`, `Assassin` ➔ `Katar`, `Blacksmith` ➔ `TwoHandAxe`)
   2. เพิ่มชุดโมเดลเมชอาวุธ `"Spear"` และ `"TwoHandSpear"` (สำหรับ `HalberdOfValor`) ใน `WEAPON_MESH_DEFS` พร้อมคำนวณตำแหน่งมือ `handY` และ `bowHandY` รองรับทั้งตัวละคร R6 (`Right Arm`) และ R15 (`RightHand`) ป้องกันอาวุธลอยหลุดมือหรือเอียงผิดทิศทาง 100%
-* **จุดที่ 2 (บรรทัด 589–617)**: ใช้วิธี Monkey-Patch ดักฟังก์ชัน `_G.CombatSystem.PlayerAttackMonster` และ `HandleSkillUse` จากภายนอก และในบรรทัด 606 เช็คเฉพาะ `type(targetId) == "string"` ทั้งที่ `CombatTargeting.lua` ส่ง `targetId` มาเป็น `Instance` (`Model`) ทำให้หาตำแหน่งเป้าหมายไม่เจอ
+  3. ปรับปรุงเงื่อนไขสร้างโล่ (`BucklerShield`) ให้เช็คทั้ง `LordKnight` และซ่อนโล่เมื่อถืออาวุธสองมือ (`TwoHandSword`, `TwoHandSpear`, `TwoHandAxe`, `Bow`, `Katar`, `Staff`) พร้อมยึดด้วย `Weld` (C0) กับแขนซ้ายโดยตรง
+* **จุดที่ 2 (บรรทัด 618–637)** [✅ แก้ไขแล้ว]: ปรับให้ `cs.HandleSkillUse` รองรับ `targetId` ทั้งแบบ `typeof(targetId) == "Instance"` และ `string` ทำให้ระบบ VFX ค้นหาตำแหน่งเป้าหมายมอนสเตอร์เจอและแสดงเอฟเฟกต์สกิลได้อย่างสมบูรณ์แบบ 100%
 
 ```lua
 -- [บรรทัด 605-607]

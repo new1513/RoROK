@@ -286,11 +286,27 @@ local function rebuildCharacterWeaponRig(player)
 		end
 	end
 
-	if leftArm and (eqShieldId or (player:GetAttribute("Class") == "Knight")) then
+	local TwoHandedTypes = {
+		TwoHandSword = true, TwoHandSpear = true, TwoHandAxe = true,
+		Bow = true, Katar = true, Staff = true,
+	}
+	local curClass = player:GetAttribute("Class") or (data and data.Class) or "Novice"
+	local canShowShield = (not TwoHandedTypes[weaponType]) and (eqShieldId ~= nil or curClass == "Knight" or curClass == "LordKnight")
+	if leftArm and canShowShield then
 		local shield = makePart(rigFolder, "BucklerShield", Vector3.new(0.28, 1.95, 1.45), Color3.fromRGB(52, 76, 128), Enum.Material.Metal)
-		weldParts(leftArm, shield, CFrame.new(-0.56, -0.25, 0))
+		local sWeld = Instance.new("Weld")
+		sWeld.Name = "ShieldGripWeld"
+		sWeld.Part0 = leftArm
+		sWeld.Part1 = shield
+		sWeld.C0 = CFrame.new(-0.56, isR6 and -0.25 or 0, 0)
+		sWeld.Parent = shield
+
 		local rim = makePart(rigFolder, "ShieldCrest", Vector3.new(0.34, 1.05, 0.75), Color3.fromRGB(235, 195, 75), Enum.Material.Metal)
-		weldParts(shield, rim, CFrame.new(-0.04, 0, 0))
+		local rWeld = Instance.new("Weld")
+		rWeld.Part0 = shield
+		rWeld.Part1 = rim
+		rWeld.C0 = CFrame.new(-0.04, 0, 0)
+		rWeld.Parent = rim
 	end
 end
 
@@ -617,7 +633,9 @@ task.spawn(function()
 
 		local origSkill = cs.HandleSkillUse
 		cs.HandleSkillUse = function(player, skillId, skillLevel, targetId)
-			local targetMonster = (type(targetId) == "string" and targetId ~= "") and Workspace:FindFirstChild(targetId, true) or nil
+			local targetMonster = (typeof(targetId) == "Instance" and targetId)
+				or ((type(targetId) == "string" and targetId ~= "") and Workspace:FindFirstChild(targetId, true))
+				or nil
 			local mRoot = targetMonster and (targetMonster:FindFirstChild("HumanoidRootPart") or targetMonster.PrimaryPart)
 			local pRoot = player and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 			local fallbackPos = (mRoot and mRoot.Position) or (pRoot and pRoot.Position)
