@@ -120,11 +120,13 @@ end
 
 local function getDefaultWeaponTypeForClass(className)
 	if className == "Knight" then return "Sword"
-	elseif className == "Mage" then return "Staff"
-	elseif className == "Acolyte" then return "Mace"
-	elseif className == "Archer" then return "Bow"
-	elseif className == "Thief" then return "Katar"
+	elseif className == "LordKnight" then return "TwoHandSpear"
+	elseif className == "Mage" or className == "Wizard" then return "Staff"
+	elseif className == "Acolyte" or className == "Priest" then return "Mace"
+	elseif className == "Archer" or className == "Hunter" then return "Bow"
+	elseif className == "Thief" or className == "Assassin" then return "Katar"
 	elseif className == "Merchant" then return "Axe"
+	elseif className == "Blacksmith" then return "TwoHandAxe"
 	else return "Dagger" end
 end
 
@@ -154,58 +156,70 @@ local function rebuildCharacterWeaponRig(player)
 
 	rigFolder:SetAttribute("WeaponType", weaponType)
 
-	-- Use real Creator Store 3D Weapon SpecialMeshes + native Roblox R6 RightGrip C0/C1 transform
-	-- so the weapon hilt sits 100% inside the character's Right Arm hand!
+	local isR6 = (rightArm.Name == "Right Arm")
+	local handY = isR6 and -0.95 or -0.15
+	local bowHandY = isR6 and -0.90 or -0.15
+
 	local WEAPON_MESH_DEFS = {
 		Sword = {
 			meshId = "http://www.roblox.com/asset/?id=94746028", texId = "http://www.roblox.com/asset/?ID=94746105",
 			scale = Vector3.new(1.15, 1.15, 1.15), size = Vector3.new(0.6, 3.6, 0.4), arm = "Right Arm",
-			gripC0 = CFrame.new(0, -0.95, 0) * CFrame.Angles(math.rad(-85), 0, 0), gripC1 = CFrame.new(0, -1.25, 0),
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -1.25, 0),
 		},
 		TwoHandSword = {
 			meshId = "http://www.roblox.com/asset/?id=94746028", texId = "http://www.roblox.com/asset/?ID=94746105",
 			scale = Vector3.new(1.4, 1.45, 1.4), size = Vector3.new(0.7, 4.4, 0.5), arm = "Right Arm",
-			gripC0 = CFrame.new(0, -0.95, 0) * CFrame.Angles(math.rad(-85), 0, 0), gripC1 = CFrame.new(0, -1.45, 0),
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -1.45, 0),
+		},
+		Spear = {
+			meshId = "http://www.roblox.com/asset/?id=94746028", texId = "http://www.roblox.com/asset/?ID=94746105",
+			scale = Vector3.new(0.95, 1.65, 0.95), size = Vector3.new(0.5, 4.8, 0.5), arm = "Right Arm",
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -1.15, 0),
+		},
+		TwoHandSpear = {
+			meshId = "http://www.roblox.com/asset/?id=94746028", texId = "http://www.roblox.com/asset/?ID=94746105",
+			scale = Vector3.new(1.15, 1.85, 1.15), size = Vector3.new(0.6, 5.4, 0.6), arm = "Right Arm",
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -1.25, 0),
 		},
 		Dagger = {
 			meshId = "http://www.roblox.com/asset/?id=94746028", texId = "http://www.roblox.com/asset/?ID=94746105",
 			scale = Vector3.new(0.85, 0.78, 0.85), size = Vector3.new(0.4, 2.3, 0.3), arm = "Right Arm",
-			gripC0 = CFrame.new(0, -0.95, 0) * CFrame.Angles(math.rad(-85), 0, 0), gripC1 = CFrame.new(0, -0.85, 0),
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -0.85, 0),
 		},
 		Katar = {
 			meshId = "http://www.roblox.com/asset/?id=94746028", texId = "http://www.roblox.com/asset/?ID=94746105",
 			scale = Vector3.new(0.95, 0.85, 0.95), size = Vector3.new(0.5, 2.4, 0.4), arm = "Right Arm",
-			gripC0 = CFrame.new(0, -0.9, 0) * CFrame.Angles(math.rad(-80), 0, 0), gripC1 = CFrame.new(0, -0.65, 0),
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -0.55, 0),
 		},
 		Staff = {
 			meshId = "http://www.roblox.com/asset?id=181326949", texId = "http://www.roblox.com/asset?id=181326992",
 			scale = Vector3.new(1.0, 1.0, 1.0), size = Vector3.new(0.5, 4.25, 1.0), arm = "Right Arm",
-			gripC0 = CFrame.new(0, -0.95, 0) * CFrame.Angles(math.rad(-85), 0, 0), gripC1 = CFrame.new(0, -1.35, 0),
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -0.85, 0),
 		},
 		Rod = {
 			meshId = "http://www.roblox.com/asset?id=181326949", texId = "http://www.roblox.com/asset?id=181326992",
 			scale = Vector3.new(0.85, 0.85, 0.85), size = Vector3.new(0.4, 3.6, 0.8), arm = "Right Arm",
-			gripC0 = CFrame.new(0, -0.95, 0) * CFrame.Angles(math.rad(-85), 0, 0), gripC1 = CFrame.new(0, -1.15, 0),
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -0.75, 0),
 		},
 		Axe = {
 			meshId = "http://www.roblox.com/asset?id=145815658", texId = "http://www.roblox.com/asset/?id=186913315",
 			scale = Vector3.new(1.0, 0.75, 1.0), size = Vector3.new(0.6, 3.4, 1.0), arm = "Right Arm",
-			gripC0 = CFrame.new(0, -0.95, 0) * CFrame.Angles(math.rad(-85), 0, 0), gripC1 = CFrame.new(0, -1.25, 0.02),
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -1.05, 0),
 		},
 		TwoHandAxe = {
 			meshId = "http://www.roblox.com/asset?id=145815658", texId = "http://www.roblox.com/asset/?id=186913315",
 			scale = Vector3.new(1.25, 0.95, 1.25), size = Vector3.new(0.7, 4.2, 1.2), arm = "Right Arm",
-			gripC0 = CFrame.new(0, -0.95, 0) * CFrame.Angles(math.rad(-85), 0, 0), gripC1 = CFrame.new(0, -1.45, 0.02),
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -1.25, 0),
 		},
 		Mace = {
 			meshId = "http://www.roblox.com/asset?id=145815658", texId = "http://www.roblox.com/asset/?id=186913315",
 			scale = Vector3.new(0.95, 0.72, 0.95), size = Vector3.new(0.6, 3.2, 0.9), arm = "Right Arm",
-			gripC0 = CFrame.new(0, -0.95, 0) * CFrame.Angles(math.rad(-85), 0, 0), gripC1 = CFrame.new(0, -1.15, 0.02),
+			gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -1.0, 0),
 		},
 		Bow = {
 			meshId = "http://www.roblox.com/asset/?id=283706818", texId = "",
 			scale = Vector3.new(1.35, 1.35, 1.35), size = Vector3.new(0.6, 3.8, 1.2), arm = "Left Arm",
-			gripC0 = CFrame.new(0, -0.9, 0) * CFrame.Angles(math.rad(10), 0, 0), gripC1 = CFrame.new(0, -0.55, 0) * CFrame.Angles(0, math.rad(90), 0),
+			gripC0 = CFrame.new(0, bowHandY, 0) * CFrame.Angles(math.rad(-90), 0, math.rad(90)), gripC1 = CFrame.new(0, 0, 0),
 		},
 	}
 

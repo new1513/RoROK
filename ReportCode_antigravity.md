@@ -904,7 +904,52 @@ end
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (29 ไฟล์)
+### ข้อเพิ่มเติม: การอัปเดตโมเดลเมชอาวุธ Spear / TwoHandSpear และรองรับคลาส 2 ใน `VisualRigAndLighting.server.lua`
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/server/VisualRigAndLighting.server.lua`
+* **สาเหตุ**:
+  * ฟังก์ชัน `getDefaultWeaponTypeForClass` ขาดคลาส 2 ทำให้ตัวละครคลาส 2 ไม่ได้รับอาวุธเริ่มต้นที่ตรงสาย
+  * ตาราง `WEAPON_MESH_DEFS` ไม่มีเมชสำหรับ `"Spear"` และ `"TwoHandSpear"` (เช่น `HalberdOfValor` ของ LordKnight)
+  * ค่าตำแหน่งมือ `gripC0` ในอดีตเป็นค่าคงที่ ไม่ได้ปรับตาม Rig ชนิด R6 (`Right Arm`) และ R15 (`RightHand`) ทำให้อาวุธอาจลอยหลุดมือหรือเอียงผิดองศา
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * ปรับ `getDefaultWeaponTypeForClass` ให้คืนค่าอาวุธตรงตามคลาส 2
+  * เพิ่มนิยาม `Spear` และ `TwoHandSpear` ใน `WEAPON_MESH_DEFS`
+  * คำนวณแกนมือ `handY` และ `bowHandY` ตามชนิด Rig (`isR6 = rightArm.Name == "Right Arm"`)
+
+```lua
+-- [จุดที่ 1: ใน getDefaultWeaponTypeForClass]:
+local function getDefaultWeaponTypeForClass(className)
+	if className == "Knight" then return "Sword"
+	elseif className == "LordKnight" then return "TwoHandSpear"
+	elseif className == "Mage" or className == "Wizard" then return "Staff"
+	elseif className == "Acolyte" or className == "Priest" then return "Mace"
+	elseif className == "Archer" or className == "Hunter" then return "Bow"
+	elseif className == "Thief" or className == "Assassin" then return "Katar"
+	elseif className == "Merchant" then return "Axe"
+	elseif className == "Blacksmith" then return "TwoHandAxe"
+	else return "Dagger" end
+end
+
+-- [จุดที่ 2: ใน WEAPON_MESH_DEFS]:
+local isR6 = (rightArm.Name == "Right Arm")
+local handY = isR6 and -0.95 or -0.15
+local bowHandY = isR6 and -0.90 or -0.15
+...
+Spear = {
+	meshId = "http://www.roblox.com/asset/?id=94746028", texId = "http://www.roblox.com/asset/?ID=94746105",
+	scale = Vector3.new(0.95, 1.65, 0.95), size = Vector3.new(0.5, 4.8, 0.5), arm = "Right Arm",
+	gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -1.15, 0),
+},
+TwoHandSpear = {
+	meshId = "http://www.roblox.com/asset/?id=94746028", texId = "http://www.roblox.com/asset/?ID=94746105",
+	scale = Vector3.new(1.15, 1.85, 1.15), size = Vector3.new(0.6, 5.4, 0.6), arm = "Right Arm",
+	gripC0 = CFrame.new(0, handY, 0) * CFrame.Angles(math.rad(-90), 0, 0), gripC1 = CFrame.new(0, -1.25, 0),
+},
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (30 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
@@ -923,18 +968,19 @@ end
 15. `d:\Robox\project01\src\server\DailyQuestSystem.server.lua`
 16. `d:\Robox\project01\src\server\TownShop.server.lua`
 17. `d:\Robox\project01\src\server\CraftingSystem.server.lua`
-18. `d:\Robox\project01\src\client\CameraController.client.lua`
-19. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
-20. `d:\Robox\project01\src\client\CombatVFX.client.lua`
-21. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
-22. `d:\Robox\project01\src\client\UIManager.client.lua`
-23. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-24. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-25. `d:\Robox\project01\src\client\UI\MinimapView.lua`
-26. `d:\Robox\project01\src\client\UI\HotbarView.lua`
-27. `d:\Robox\project01\src\client\UI\NpcDialogueUI.lua`
-28. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
-29. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+18. `d:\Robox\project01\src\server\VisualRigAndLighting.server.lua`
+19. `d:\Robox\project01\src\client\CameraController.client.lua`
+20. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+21. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+22. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+23. `d:\Robox\project01\src\client\UIManager.client.lua`
+24. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+25. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+26. `d:\Robox\project01\src\client\UI\MinimapView.lua`
+27. `d:\Robox\project01\src\client\UI\HotbarView.lua`
+28. `d:\Robox\project01\src\client\UI\NpcDialogueUI.lua`
+29. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
+30. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*
