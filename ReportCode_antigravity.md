@@ -1003,38 +1003,88 @@ end
 
 ---
 
-## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (30 ไฟล์)
+### ข้อเพิ่มเติม: การปรับปรุงฐานข้อมูลราคาการ์ดและ Alias ในตลาดกลาง (`MarketData.lua` & `MarketSystem.server.lua`)
+* **ไฟล์ที่เกี่ยวข้อง**:
+  * `src/shared/MarketData.lua`
+  * `src/server/MarketSystem.server.lua`
+* **สาเหตุ**:
+  * เดิม `BasePrices` ใน `MarketData.lua` กำหนดไว้เฉพาะ `PoringCard` และ `LunaticCard` ทำให้การ์ดบอสใบอื่นๆ ถูกคำนวณราคาขั้นต่ำจาก `sellPrice * 3` ซึ่งต่ำเกินไปกว่ามูลค่าจริง และอาวุธ 2nd Job ไม่ถูกระบุใน `Untradable`
+  * ใน `MarketSystem.server.lua` ฟังก์ชัน `entryMatches` ตรวจสอบชื่อ `itemId` ตรงๆ ทำให้ไอเทมที่มี Alias แบบขีดล่าง (`Sticky_Mucus`, `Iron_Ore`, `Poring_Card`) ไม่จับคู่กับไอเทมในกระเป๋า
+* **วิธีแก้ & โค้ดที่เปลี่ยนแปลง**:
+  * เพิ่ม `BasePrices` ครบทั้ง 14 การ์ด พร้อมรองรับคีย์ Alias
+  * เพิ่มอาวุธแจกฟรี 2nd Job ทั้ง 6 ชนิดลงใน `Untradable`
+  * เพิ่มตาราง `ITEM_ALIAS_MAP` และฟังก์ชัน `normalizeItemId` ใน `MarketSystem.server.lua`
+
+```lua
+-- [ใน MarketData.lua]:
+BasePrices = {
+	PoringCard = 15000, Poring_Card = 15000,
+	LunaticCard = 25000, Lunatic_Card = 25000,
+	WolfCard = 35000, ZombieCard = 30000, SkeletonCard = 40000,
+	ScorpionCard = 55000, MummyCard = 60000, SwordfishCard = 70000, TenguCard = 85000,
+	MinorousCard = 120000, DrakeCard = 250000, EddgaCard = 350000,
+	TurtleGeneralCard = 450000, GoldenThiefBugCard = 600000,
+},
+Untradable = {
+	...
+	HalberdOfValor = true, HolyJudgementCross = true, ArchMageStaff = true,
+	HunterGaleBow = true, KatarOfShadows = true, WarhammerOfTitans = true,
+}
+
+-- [ใน MarketSystem.server.lua]:
+local ITEM_ALIAS_MAP = {
+	Sticky_Mucus = "StickyMucus",
+	Iron_Ore     = "IronOre",
+	Poring_Card  = "PoringCard",
+	Lunatic_Card = "LunaticCard",
+}
+local function normalizeItemId(id)
+	return ITEM_ALIAS_MAP[id] or id
+end
+
+local function entryMatches(entry, itemId, enhancement)
+	return isPlainEntry(entry)
+		and normalizeItemId(entry.itemId) == normalizeItemId(itemId)
+		and entryRefine(entry) == enhancement
+end
+```
+
+---
+
+## สรุปรายการไฟล์ทั้งหมดที่ได้รับการแก้ไขในโปรเจกต์ (32 ไฟล์)
 
 1. `d:\Robox\project01\src\shared\ClassData.lua`
 2. `d:\Robox\project01\src\shared\ItemData.lua`
 3. `d:\Robox\project01\src\shared\DailyQuestData.lua`
-4. `d:\Robox\project01\src\server\DataStore.server.lua`
-5. `d:\Robox\project01\src\server\GameManager.server.lua`
-6. `d:\Robox\project01\src\server\CombatSystem.server.lua`
-7. `d:\Robox\project01\src\server\MonsterAI.server.lua`
-8. `d:\Robox\project01\src\server\GuildSystem.server.lua`
-9. `d:\Robox\project01\src\server\JobAdvancementSystem.server.lua`
-10. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
-11. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
-12. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
-13. `d:\Robox\project01\src\server\StarterMap.server.lua`
-14. `d:\Robox\project01\src\server\TownStoryQuestSystem.server.lua`
-15. `d:\Robox\project01\src\server\DailyQuestSystem.server.lua`
-16. `d:\Robox\project01\src\server\TownShop.server.lua`
-17. `d:\Robox\project01\src\server\CraftingSystem.server.lua`
-18. `d:\Robox\project01\src\server\VisualRigAndLighting.server.lua`
-19. `d:\Robox\project01\src\client\CameraController.client.lua`
-20. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
-21. `d:\Robox\project01\src\client\CombatVFX.client.lua`
-22. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
-23. `d:\Robox\project01\src\client\UIManager.client.lua`
-24. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
-25. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
-26. `d:\Robox\project01\src\client\UI\MinimapView.lua`
-27. `d:\Robox\project01\src\client\UI\HotbarView.lua`
-28. `d:\Robox\project01\src\client\UI\NpcDialogueUI.lua`
-29. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
-30. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
+4. `d:\Robox\project01\src\shared\MarketData.lua`
+5. `d:\Robox\project01\src\server\DataStore.server.lua`
+6. `d:\Robox\project01\src\server\GameManager.server.lua`
+7. `d:\Robox\project01\src\server\CombatSystem.server.lua`
+8. `d:\Robox\project01\src\server\MonsterAI.server.lua`
+9. `d:\Robox\project01\src\server\GuildSystem.server.lua`
+10. `d:\Robox\project01\src\server\JobAdvancementSystem.server.lua`
+11. `d:\Robox\project01\src\server\PvPArenaSystem.server.lua`
+12. `d:\Robox\project01\src\server\DungeonAndMvpSystem.server.lua`
+13. `d:\Robox\project01\src\server\WorldMapExpansion.server.lua`
+14. `d:\Robox\project01\src\server\StarterMap.server.lua`
+15. `d:\Robox\project01\src\server\TownStoryQuestSystem.server.lua`
+16. `d:\Robox\project01\src\server\DailyQuestSystem.server.lua`
+17. `d:\Robox\project01\src\server\TownShop.server.lua`
+18. `d:\Robox\project01\src\server\CraftingSystem.server.lua`
+19. `d:\Robox\project01\src\server\VisualRigAndLighting.server.lua`
+20. `d:\Robox\project01\src\server\MarketSystem.server.lua`
+21. `d:\Robox\project01\src\client\CameraController.client.lua`
+22. `d:\Robox\project01\src\client\ExpansionUI.client.lua`
+23. `d:\Robox\project01\src\client\CombatVFX.client.lua`
+24. `d:\Robox\project01\src\client\RagnarokPanels.client.lua`
+25. `d:\Robox\project01\src\client\UIManager.client.lua`
+26. `d:\Robox\project01\src\client\UI\WindowSystem.lua`
+27. `d:\Robox\project01\src\client\UI\CombatTargeting.lua`
+28. `d:\Robox\project01\src\client\UI\MinimapView.lua`
+29. `d:\Robox\project01\src\client\UI\HotbarView.lua`
+30. `d:\Robox\project01\src\client\UI\NpcDialogueUI.lua`
+31. `d:\Robox\project01\src\client\PvPArenaUI.client.lua`
+32. `d:\Robox\project01\reportcode_gemini.md` (อัปเดตมาร์กเกอร์ [✅ แก้ไขแล้ว] ครบทุกจุด)
 
 ---
 *จัดทำและตรวจสอบความถูกต้องโดย Antigravity AI Assistant*

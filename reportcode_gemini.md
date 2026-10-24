@@ -80,7 +80,9 @@ end
 
 ### 2.5 `src/shared/MarketData.lua`
 
-* **จุดที่ 1 (บรรทัด 55–58 และ 63–73)**: กำหนด `BasePrices` เฉพาะ `PoringCard` และ `LunaticCard` ทำให้การ์ดบอสระดับ MVP (เช่น `GoldenThiefBugCard`, `TurtleGeneralCard`) ถูกคำนวณราคาตลาดจาก `sellPrice * 3` ซึ่งถูกกว่าการ์ด Poring! และอาวุธประจำคลาส 2nd Job ที่แจกฟรีตอนเลื่อนขั้นไม่อยู่ในตาราง `Untradable`
+* **จุดที่ 1 (บรรทัด 55–85)** [✅ แก้ไขแล้ว]:
+  1. เพิ่ม `BasePrices` ครบทั้ง 14 การ์ด (ทั้งมอนสเตอร์ทั่วไปและบอส MVP เช่น `DrakeCard`, `EddgaCard`, `TurtleGeneralCard`, `GoldenThiefBugCard`) พร้อมรองรับคีย์ Alias แบบมี `_Card`
+  2. เพิ่มชุดอาวุธประจำคลาส 2nd Job ที่ได้รับแจกฟรี (`HalberdOfValor`, `HolyJudgementCross`, `ArchMageStaff`, `HunterGaleBow`, `KatarOfShadows`, `WarhammerOfTitans`) ลงในตาราง `Untradable` ป้องกันการนำอาวุธเริ่มต้นไปปั๊ม Zeny ในตลาด 100%
 
 ```lua
 -- [บรรทัด 55-58]
@@ -305,9 +307,8 @@ if changeClassRemote then -- ❌ [จุดที่เขียนไม่ด�
 
 ### 3.10 `src/server/MarketSystem.server.lua`
 
-* **จุดที่ 1 (บรรทัด 122–159 และ 831–906)**:
-  1. เขียนฟังก์ชันจัดการกระเป๋า (`countInInventory`, `takeFromInventory`, `giveToData`) แยกต่างหากอีกชุด
-  2. โค้ดสร้างหุ่น NPC `buildBroker()` (บรรทัด 831–906) ซ้ำซ้อนกับฟังก์ชันสร้าง NPC ใน `TownShop.server.lua`, `CraftingSystem.server.lua`, และ `StarterMap.server.lua`
+* **จุดที่ 1 (บรรทัด 118–130)** [✅ แก้ไขแล้ว]: เพิ่ม `ITEM_ALIAS_MAP` และฟังก์ชัน `normalizeItemId(id)` ใน `entryMatches` เพื่อแปลงชื่อไอเทมทั้งแบบมีขีดล่าง (`Sticky_Mucus`, `Iron_Ore`, `Poring_Card`, `Lunatic_Card`) และไม่มีขีดล่างให้ตรงกันเสมอ ทำให้ค้นหาและจับคู่ไอเทมในตลาดกลางได้แม่นยำ 100%
+* **จุดที่ 2 (บรรทัด 135–170 และ 845–920)**: โค้ดสร้างหุ่น NPC `buildBroker()` ซ้ำซ้อนกับฟังก์ชันสร้าง NPC ในสคริปต์อื่นๆ
 
 ```lua
 -- [บรรทัด 839-864]

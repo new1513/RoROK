@@ -115,8 +115,20 @@ local function entryRefine(entry)
 	return math.clamp(math.floor(tonumber(entry.enhancement) or 0), 0, 15)
 end
 
+local ITEM_ALIAS_MAP = {
+	Sticky_Mucus = "StickyMucus",
+	Iron_Ore     = "IronOre",
+	Poring_Card  = "PoringCard",
+	Lunatic_Card = "LunaticCard",
+}
+local function normalizeItemId(id)
+	return ITEM_ALIAS_MAP[id] or id
+end
+
 local function entryMatches(entry, itemId, enhancement)
-	return isPlainEntry(entry) and entry.itemId == itemId and entryRefine(entry) == enhancement
+	return isPlainEntry(entry)
+		and normalizeItemId(entry.itemId) == normalizeItemId(itemId)
+		and entryRefine(entry) == enhancement
 end
 
 local function countInInventory(data, itemId, enhancement)

@@ -53,22 +53,40 @@ return {
 	-- Explicit overrides for items whose rarity is not visible in sellPrice.
 	-- Cards drop at 0.03-0.05%, so they are priced far above their NPC value.
 	BasePrices = {
-		PoringCard = 15000,
-		LunaticCard = 25000,
+		PoringCard          = 15000,
+		Poring_Card         = 15000,
+		LunaticCard         = 25000,
+		Lunatic_Card        = 25000,
+		WolfCard            = 35000,
+		ZombieCard          = 30000,
+		SkeletonCard        = 40000,
+		ScorpionCard        = 55000,
+		MummyCard           = 60000,
+		SwordfishCard       = 70000,
+		TenguCard           = 85000,
+		MinorousCard        = 120000,
+		DrakeCard           = 250000,
+		EddgaCard           = 350000,
+		TurtleGeneralCard   = 450000,
+		GoldenThiefBugCard  = 600000,
 	},
 
 	-- ===== Not tradable =====
-	-- The free starter kit and starter refine stones are untradable so new or alt
-	-- accounts cannot print Zeny. Remove a line to allow trading that item.
 	Untradable = {
-		NoviceTrainingDagger = true,
-		ApprenticeRod = true,
-		AcolyteTrainingMace = true,
-		KnightTrainingSword = true,
-		ArcherTrainingBow = true,
-		ThiefTrainingDagger = true,
-		MerchantTrainingAxe = true,
-		NoviceClothes = true,
+		NoviceTrainingDagger    = true,
+		ApprenticeRod           = true,
+		AcolyteTrainingMace     = true,
+		KnightTrainingSword     = true,
+		ArcherTrainingBow       = true,
+		ThiefTrainingDagger     = true,
+		MerchantTrainingAxe     = true,
+		NoviceClothes           = true,
 		BeginnerRefinementStone = true,
+		HalberdOfValor          = true,
+		HolyJudgementCross      = true,
+		ArchMageStaff           = true,
+		HunterGaleBow           = true,
+		KatarOfShadows          = true,
+		WarhammerOfTitans       = true,
 	},
 }
